@@ -410,21 +410,14 @@ public class ReceiptPrinter
             _serial.WriteText($"Fecho:     {session.ClosedAt ?? "Em aberto"}\n");
             PrintLine('-');
 
-            // Totals
+            // Opening balance
             _serial.Write(EscPosCommands.BoldOn);
             _serial.WriteText(FormatTotalLine("Fundo Caixa:", $"{session.OpeningBalance:F2}"));
-            _serial.WriteText(FormatTotalLine("Total Vendas:", $"{session.TotalSales:F2}"));
-            _serial.WriteText(FormatTotalLine("Num. Trans.:", $"{session.TotalTransactions}"));
-
-            var closing = session.ClosingBalance ?? (session.OpeningBalance + session.TotalSales);
-            _serial.Write(EscPosCommands.SizeDoubleHeight);
-            _serial.WriteText(FormatTotalLine("TOTAL:", $"{closing:F2} EUR"));
-            _serial.Write(EscPosCommands.SizeNormal);
             _serial.Write(EscPosCommands.BoldOff);
 
             // Payment method breakdown
             PrintLine('-');
-            _serial.WriteText("Resumo por pagamento:\n");
+            _serial.WriteText("PAGAMENTOS:\n");
             var byPayment = transactions
                 .Where(t => !t.Voided)
                 .GroupBy(t => t.PaymentMethod)
@@ -434,6 +427,16 @@ public class ReceiptPrinter
             {
                 _serial.WriteText(FormatTotalLine($"  {GetPaymentLabel(pm.Method)} ({pm.Count}):", $"{pm.Total:F2}"));
             }
+
+            // Totals summary
+            PrintLine('-');
+            _serial.Write(EscPosCommands.BoldOn);
+            _serial.WriteText(FormatTotalLine("TOTAL VENDAS:", $"{session.TotalSales:F2}"));
+            var closing = session.ClosingBalance ?? (session.OpeningBalance + session.TotalSales);
+            _serial.Write(EscPosCommands.SizeDoubleHeight);
+            _serial.WriteText(FormatTotalLine("TOTAL CAIXA:", $"{closing:F2} EUR"));
+            _serial.Write(EscPosCommands.SizeNormal);
+            _serial.Write(EscPosCommands.BoldOff);
 
             // Voided count
             var voidedCount = transactions.Count(t => t.Voided);
