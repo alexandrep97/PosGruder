@@ -52,9 +52,10 @@ const virtualKeyboard = {
         const kb = document.getElementById('vk-keyboard');
         if (!kb) return;
         kb.innerHTML = this._rows[layer].map(row =>
-            `<div class="vk-row">${row.map(k =>
-                `<button class="${this._keyClass(k)}" onclick="virtualKeyboard._key(${JSON.stringify(k)})">${this._keyLabel(k)}</button>`
-            ).join('')}</div>`
+            `<div class="vk-row">${row.map(k => {
+                const safeKey = k.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                return `<button class="${this._keyClass(k)}" data-key="${safeKey}">${this._keyLabel(k)}</button>`;
+            }).join('')}</div>`
         ).join('');
     },
 
@@ -131,6 +132,10 @@ const virtualKeyboard = {
             if (!btn) return;
             const el = document.getElementById(btn.dataset.target);
             if (el) this.open(el, btn.dataset.label || '');
+        });
+        document.getElementById('modal-keyboard').addEventListener('click', e => {
+            const btn = e.target.closest('button[data-key]');
+            if (btn) this._key(btn.dataset.key);
         });
     }
 };

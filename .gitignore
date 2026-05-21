@@ -60,3 +60,4 @@ nunit-*.xml
 GruderPOS/GruderPOS.csproj.user
 
 .superpowers/
+docs/
