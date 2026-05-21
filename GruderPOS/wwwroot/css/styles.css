@@ -277,7 +277,6 @@ body {
 .products-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    grid-auto-rows: minmax(110px, 160px);
     align-content: start;
     gap: 12px;
     overflow-y: auto;
