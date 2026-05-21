@@ -149,7 +149,6 @@ const app = {
             this.updateSessionUI();
             this.closeSessionModal();
             showToast('Caixa aberta com sucesso!', 'success');
-            if (this.currentPage === 'history') history.showTab(history.currentTab);
         } catch (e) {
             showToast('Erro ao abrir caixa: ' + e.message, 'error');
         }
@@ -163,7 +162,6 @@ const app = {
             this.updateSessionUI();
             this.closeSessionModal();
             showToast('Caixa fechada com sucesso! Relatório impresso.', 'success');
-            if (this.currentPage === 'history') history.showTab(history.currentTab);
         } catch (e) {
             showToast('Erro ao fechar caixa: ' + e.message, 'error');
         }
