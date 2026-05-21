@@ -58,36 +58,39 @@ const pos = {
 
     renderProducts() {
         const container = document.getElementById('products-grid');
-        let filtered = this.products;
+        const emptyHtml = `
+        <div class="empty-state" style="grid-column: 1/-1;">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16zM6 6h12v2H6V6zm0 4h12v2H6v-2zm0 4h8v2H6v-2z"/></svg>
+            <p>Sem produtos nesta categoria</p>
+        </div>`;
 
-        if (this.selectedCategory) {
-            filtered = this.products.filter(p => p.categoryId === this.selectedCategory);
-        }
-
-        if (filtered.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state" style="grid-column: 1/-1;">
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H4V4h16v16zM6 6h12v2H6V6zm0 4h12v2H6v-2zm0 4h8v2H6v-2z"/></svg>
-                    <p>Sem produtos nesta categoria</p>
-                </div>`;
+        if (this.selectedCategory === null) {
+            let html = '';
+            this.categories.forEach(cat => {
+                const catProducts = this.products.filter(p => p.categoryId === cat.id);
+                if (catProducts.length === 0) return;
+                html += `<div class="product-group-header">${cat.name}</div>`;
+                catProducts.forEach(p => { html += this._productCardHtml(p); });
+            });
+            container.innerHTML = html === '' ? emptyHtml : html;
             return;
         }
 
-        let html = '';
-        filtered.forEach(product => {
-            const cartItem = this.cart.find(c => c.productId === product.id && !c.isGenericItem);
-            const badge = cartItem ? `<div class="cart-badge">${cartItem.quantity}</div>` : '';
-            const isGeneric = product.isGeneric;
+        const filtered = this.products.filter(p => p.categoryId === this.selectedCategory);
+        container.innerHTML = filtered.length === 0
+            ? emptyHtml
+            : filtered.map(p => this._productCardHtml(p)).join('');
+    },
 
-            html += `
-                <div class="product-card ${isGeneric ? 'generic' : ''}" onclick="${isGeneric ? 'pos.showGenericModal()' : `pos.addToCart(${product.id})`}">
-                    ${badge}
-                    <div class="product-name">${product.name}</div>
-                    <div class="product-price">${isGeneric ? 'Valor Manual' : formatCurrency(product.price)}</div>
-                </div>`;
-        });
-
-        container.innerHTML = html;
+    _productCardHtml(product) {
+        const cartItem = this.cart.find(c => c.productId === product.id && !c.isGenericItem);
+        const badge = cartItem ? `<div class="cart-badge">${cartItem.quantity}</div>` : '';
+        return `
+        <div class="product-card ${product.isGeneric ? 'generic' : ''}" onclick="${product.isGeneric ? 'pos.showGenericModal()' : `pos.addToCart(${product.id})`}">
+            ${badge}
+            <div class="product-name">${product.name}</div>
+            <div class="product-price">${product.isGeneric ? 'Valor Manual' : formatCurrency(product.price)}</div>
+        </div>`;
     },
 
     addToCart(productId) {
