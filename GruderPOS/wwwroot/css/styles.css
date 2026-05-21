@@ -1158,6 +1158,69 @@ body {
     margin-top: 2px;
 }
 
+.session-opening-balance {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+}
+
+.session-opening-balance .session-stat-label {
+    font-size: 12px;
+    margin-top: 0;
+}
+
+.session-opening-balance .session-stat-value {
+    font-size: 14px;
+}
+
+.session-payment-breakdown {
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    margin-top: 4px;
+}
+
+.session-breakdown-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.session-breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 2px 0;
+    color: var(--text-light);
+}
+
+.session-totals {
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+.session-total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 3px 0;
+}
+
+.session-total-caixa {
+    font-size: 16px;
+    font-weight: 800;
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
+}
+
 /* ===== Toast ===== */
 .toast-container {
     position: fixed;
