@@ -18,6 +18,8 @@ const app = {
                 this.showOpenSessionModal();
             }
         };
+
+        virtualKeyboard.init();
     },
 
     async loadSettings() {
@@ -123,7 +125,10 @@ const app = {
             </div>
             <div class="form-group">
                 <label>Notas (opcional)</label>
-                <textarea id="close-notes" class="form-input" rows="3" placeholder="Observações sobre o fecho de caixa..."></textarea>
+                <div class="input-with-keyboard">
+                    <textarea id="close-notes" class="form-input" rows="3" placeholder="Observações sobre o fecho de caixa..."></textarea>
+                    <button class="btn-keyboard" data-target="close-notes" data-label="Notas">⌨</button>
+                </div>
             </div>
         `;
         footer.innerHTML = `
@@ -144,6 +149,7 @@ const app = {
             this.updateSessionUI();
             this.closeSessionModal();
             showToast('Caixa aberta com sucesso!', 'success');
+            if (this.currentPage === 'history') history.showTab(history.currentTab);
         } catch (e) {
             showToast('Erro ao abrir caixa: ' + e.message, 'error');
         }
@@ -157,6 +163,7 @@ const app = {
             this.updateSessionUI();
             this.closeSessionModal();
             showToast('Caixa fechada com sucesso! Relatório impresso.', 'success');
+            if (this.currentPage === 'history') history.showTab(history.currentTab);
         } catch (e) {
             showToast('Erro ao fechar caixa: ' + e.message, 'error');
         }
