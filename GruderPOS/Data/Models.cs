@@ -37,6 +37,19 @@ public class CashSession
     public string Status { get; set; } = "Open";
 }
 
+public class PaymentBreakdown
+{
+    public string Method { get; set; } = string.Empty;
+    public double Total { get; set; }
+    public int Count { get; set; }
+}
+
+public class CashSessionDetail
+{
+    public CashSession Session { get; set; } = new();
+    public List<PaymentBreakdown> PaymentBreakdown { get; set; } = new();
+}
+
 public class Transaction
 {
     public int Id { get; set; }
