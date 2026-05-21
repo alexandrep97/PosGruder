@@ -112,7 +112,7 @@ const settings = {
         body.innerHTML = `
             <div class="form-group">
                 <label>Nome da Categoria</label>
-                <input type="text" id="cat-name" class="form-input" value="${cat ? cat.name : ''}" placeholder="Ex: Bebidas, Comida...">
+                <div class="input-with-keyboard"><input type="text" id="cat-name" class="form-input" value="${cat ? cat.name : ''}" placeholder="Ex: Bebidas, Comida..."><button class="btn-keyboard" data-target="cat-name" data-label="Nome da Categoria">⌨</button></div>
             </div>
             <div class="form-group">
                 <label class="form-checkbox">
@@ -260,7 +260,7 @@ const settings = {
         body.innerHTML = `
             <div class="form-group">
                 <label>Nome do Produto</label>
-                <input type="text" id="prod-name" class="form-input" value="${prod ? prod.name : ''}" placeholder="Ex: Bifana, Cerveja...">
+                <div class="input-with-keyboard"><input type="text" id="prod-name" class="form-input" value="${prod ? prod.name : ''}" placeholder="Ex: Bifana, Cerveja..."><button class="btn-keyboard" data-target="prod-name" data-label="Nome do Produto">⌨</button></div>
             </div>
             <div class="form-group">
                 <label>Categoria</label>
@@ -411,10 +411,10 @@ const settings = {
                     <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
                         Linha 1 é impressa em tamanho grande e negrito. Linhas vazias são omitidas.
                     </p>
-                    <div class="form-group"><label>Linha 1 (Título principal)</label><input type="text" id="receipt-h1" class="form-input" value="${h1}" placeholder="Ex: GRUDER"></div>
-                    <div class="form-group"><label>Linha 2</label><input type="text" id="receipt-h2" class="form-input" value="${h2}" placeholder="Ex: GRUPO DESPORTIVO DA"></div>
-                    <div class="form-group"><label>Linha 3</label><input type="text" id="receipt-h3" class="form-input" value="${h3}" placeholder="Ex: RIBEIRA DO FARRIO"></div>
-                    <div class="form-group"><label>Linha 4</label><input type="text" id="receipt-h4" class="form-input" value="${h4}" placeholder="Ex: Fundado em 1977"></div>
+                    <div class="form-group"><label>Linha 1 (Título principal)</label><div class="input-with-keyboard"><input type="text" id="receipt-h1" class="form-input" value="${h1}" placeholder="Ex: GRUDER"><button class="btn-keyboard" data-target="receipt-h1" data-label="Cabeçalho Linha 1">⌨</button></div></div>
+                    <div class="form-group"><label>Linha 2</label><div class="input-with-keyboard"><input type="text" id="receipt-h2" class="form-input" value="${h2}" placeholder="Ex: GRUPO DESPORTIVO DA"><button class="btn-keyboard" data-target="receipt-h2" data-label="Cabeçalho Linha 2">⌨</button></div></div>
+                    <div class="form-group"><label>Linha 3</label><div class="input-with-keyboard"><input type="text" id="receipt-h3" class="form-input" value="${h3}" placeholder="Ex: RIBEIRA DO FARRIO"><button class="btn-keyboard" data-target="receipt-h3" data-label="Cabeçalho Linha 3">⌨</button></div></div>
+                    <div class="form-group"><label>Linha 4</label><div class="input-with-keyboard"><input type="text" id="receipt-h4" class="form-input" value="${h4}" placeholder="Ex: Fundado em 1977"><button class="btn-keyboard" data-target="receipt-h4" data-label="Cabeçalho Linha 4">⌨</button></div></div>
                 </div>
             </div>
 
@@ -431,9 +431,9 @@ const settings = {
                     <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
                         Textos personalizados exibidos no corpo do talão. Se vazio, usa o nome do evento das definições gerais.
                     </p>
-                    <div class="form-group"><label>Título do Corpo (negrito)</label><input type="text" id="receipt-bt" class="form-input" value="${bt}" placeholder="Ex: Festa GRUDER 2026"></div>
-                    <div class="form-group"><label>Linha adicional 1</label><input type="text" id="receipt-b1" class="form-input" value="${b1}" placeholder="Ex: Bar Principal"></div>
-                    <div class="form-group"><label>Linha adicional 2</label><input type="text" id="receipt-b2" class="form-input" value="${b2}" placeholder=""></div>
+                    <div class="form-group"><label>Título do Corpo (negrito)</label><div class="input-with-keyboard"><input type="text" id="receipt-bt" class="form-input" value="${bt}" placeholder="Ex: Festa GRUDER 2026"><button class="btn-keyboard" data-target="receipt-bt" data-label="Título do Corpo">⌨</button></div></div>
+                    <div class="form-group"><label>Linha adicional 1</label><div class="input-with-keyboard"><input type="text" id="receipt-b1" class="form-input" value="${b1}" placeholder="Ex: Bar Principal"><button class="btn-keyboard" data-target="receipt-b1" data-label="Corpo Linha 1">⌨</button></div></div>
+                    <div class="form-group"><label>Linha adicional 2</label><div class="input-with-keyboard"><input type="text" id="receipt-b2" class="form-input" value="${b2}" placeholder=""><button class="btn-keyboard" data-target="receipt-b2" data-label="Corpo Linha 2">⌨</button></div></div>
                 </div>
 
                 <h4 style="font-size: 14px; margin: 20px 0 8px; color: var(--text-light);">Campos Visíveis</h4>
@@ -458,8 +458,8 @@ const settings = {
                 </div>
                 <div id="receipt-footer-fields" ${!footerEnabled ? 'style="opacity:0.4; pointer-events:none;"' : ''}>
                     <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Linha 2 é impressa em negrito. Linhas vazias são omitidas.</p>
-                    <div class="form-group"><label>Linha 1</label><input type="text" id="receipt-f1" class="form-input" value="${f1}" placeholder="Ex: Obrigado pela preferência!"></div>
-                    <div class="form-group"><label>Linha 2 (Destaque)</label><input type="text" id="receipt-f2" class="form-input" value="${f2}" placeholder="Ex: GRUDER - 1977"></div>
+                    <div class="form-group"><label>Linha 1</label><div class="input-with-keyboard"><input type="text" id="receipt-f1" class="form-input" value="${f1}" placeholder="Ex: Obrigado pela preferência!"><button class="btn-keyboard" data-target="receipt-f1" data-label="Rodapé Linha 1">⌨</button></div></div>
+                    <div class="form-group"><label>Linha 2 (Destaque)</label><div class="input-with-keyboard"><input type="text" id="receipt-f2" class="form-input" value="${f2}" placeholder="Ex: GRUDER - 1977"><button class="btn-keyboard" data-target="receipt-f2" data-label="Rodapé Linha 2">⌨</button></div></div>
                 </div>
             </div>
 
@@ -762,7 +762,7 @@ const settings = {
                 <h3 style="font-size: 16px; margin-bottom: 20px;">Definições Gerais</h3>
                 <div class="form-group">
                     <label>Nome do Evento / Festa</label>
-                    <input type="text" id="setting-event" class="form-input" value="${appSettings.EventName || 'Festa GRUDER 2026'}" placeholder="Ex: Festa de Verão 2026">
+                    <div class="input-with-keyboard"><input type="text" id="setting-event" class="form-input" value="${appSettings.EventName || 'Festa GRUDER 2026'}" placeholder="Ex: Festa de Verão 2026"><button class="btn-keyboard" data-target="setting-event" data-label="Nome do Evento">⌨</button></div>
                 </div>
                 <div style="margin-top: 20px;">
                     <button class="btn btn-primary" onclick="settings.saveGeneralSettings()">Guardar</button>
