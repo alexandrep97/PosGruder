@@ -211,7 +211,7 @@ public class WebBridge
         await _cashSessions.GetCurrentAsync() ?? (object)new { };
 
     private async Task<object> HandleGetCashSessions() =>
-        await _cashSessions.GetAllAsync();
+        await _cashSessions.GetAllWithBreakdownAsync();
 
     // Transactions
     private async Task<object> HandleProcessTransaction(JsonElement root)
