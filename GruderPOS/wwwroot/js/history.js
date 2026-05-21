@@ -35,22 +35,25 @@ const history = {
                 <input type="date" id="filter-from" value="${today}" onchange="history.filterTransactions()">
                 <label>Até:</label>
                 <input type="date" id="filter-to" value="${today}" onchange="history.filterTransactions()">
-                <button class="btn btn-small btn-outline" onclick="history.filterTransactions()">Filtrar</button>
+                <button class="btn btn-small btn-outline" onclick="history.filterTransactions(this)">Filtrar</button>
             </div>
             <div id="transactions-list"></div>`;
 
         await this.filterTransactions();
     },
 
-    async filterTransactions() {
+    async filterTransactions(btn) {
         const from = document.getElementById('filter-from').value;
         const to = document.getElementById('filter-to').value;
         const listEl = document.getElementById('transactions-list');
 
+        setButtonLoading(btn, true);
         try {
             this.transactions = await bridge.send('getTransactions', { dateFrom: from, dateTo: to });
         } catch (e) {
             this.transactions = [];
+        } finally {
+            setButtonLoading(btn, false);
         }
 
         if (!this.transactions || this.transactions.length === 0) {
@@ -119,7 +122,7 @@ const history = {
             if (!t.voided) {
                 html += `
                     <div class="transaction-actions">
-                        <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); history.voidTransaction(${t.id})">Anular</button>
+                        <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); history.voidTransaction(${t.id}, this)">Anular</button>
                     </div>`;
             }
 
@@ -134,9 +137,10 @@ const history = {
         if (el) el.classList.toggle('open');
     },
 
-    async voidTransaction(id) {
+    async voidTransaction(id, btn) {
         if (!confirm('Tem a certeza que pretende anular esta transação?')) return;
 
+        setButtonLoading(btn, true);
         try {
             await bridge.send('voidTransaction', { id });
             showToast('Transação anulada', 'warning');
@@ -148,6 +152,7 @@ const history = {
             await this.filterTransactions();
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
+            setButtonLoading(btn, false);
         }
     },
 

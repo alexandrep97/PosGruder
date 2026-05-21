@@ -143,6 +143,8 @@ const app = {
     },
 
     async openSession() {
+        const btn = document.querySelector('#session-modal-footer .btn-success');
+        setButtonLoading(btn, true);
         try {
             const balance = parseFloat(document.getElementById('opening-balance').value) || 0;
             this.currentSession = await bridge.send('openCashSession', { openingBalance: balance });
@@ -152,10 +154,13 @@ const app = {
             if (this.currentPage === 'history') history.showTab(history.currentTab);
         } catch (e) {
             showToast('Erro ao abrir caixa: ' + e.message, 'error');
+            setButtonLoading(btn, false);
         }
     },
 
     async closeSession() {
+        const btn = document.querySelector('#session-modal-footer .btn-danger');
+        setButtonLoading(btn, true);
         try {
             const notes = document.getElementById('close-notes').value;
             await bridge.send('closeCashSession', { notes });
@@ -166,6 +171,7 @@ const app = {
             if (this.currentPage === 'history') history.showTab(history.currentTab);
         } catch (e) {
             showToast('Erro ao fechar caixa: ' + e.message, 'error');
+            setButtonLoading(btn, false);
         }
     },
 
@@ -210,6 +216,25 @@ function showToast(message, type = 'info') {
         toast.classList.add('toast-exit');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
+}
+
+function setButtonLoading(btn, loading) {
+    if (!btn) return;
+    if (btn.type === 'checkbox') {
+        btn.disabled = loading;
+        return;
+    }
+    if (loading) {
+        btn.disabled = true;
+        btn.dataset.origContent = btn.innerHTML;
+        btn.innerHTML = '<span class="btn-spinner"></span>';
+    } else {
+        btn.disabled = false;
+        if (btn.dataset.origContent !== undefined) {
+            btn.innerHTML = btn.dataset.origContent;
+            delete btn.dataset.origContent;
+        }
+    }
 }
 
 function showPaymentSuccess(amount) {

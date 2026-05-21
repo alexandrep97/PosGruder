@@ -72,13 +72,13 @@ const settings = {
                     </div>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <label class="toggle-switch" title="${cat.isActive ? 'Ativa' : 'Inativa'}">
-                            <input type="checkbox" ${cat.isActive ? 'checked' : ''} onchange="settings.toggleCategoryActive(${cat.id}, this.checked)">
+                            <input type="checkbox" ${cat.isActive ? 'checked' : ''} onchange="settings.toggleCategoryActive(${cat.id}, this.checked, this)">
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
                     <div class="settings-item-actions">
                         <button class="btn btn-outline btn-small" onclick="settings.showCategoryForm(${cat.id})">Editar</button>
-                        <button class="btn btn-danger btn-small" onclick="settings.deleteCategory(${cat.id})">Remover</button>
+                        <button class="btn btn-danger btn-small" onclick="settings.deleteCategory(${cat.id}, this)">Remover</button>
                     </div>
                 </div>`;
         });
@@ -87,9 +87,10 @@ const settings = {
         container.innerHTML = html;
     },
 
-    async toggleCategoryActive(id, isActive) {
+    async toggleCategoryActive(id, isActive, el) {
         const cat = this.categories.find(c => c.id === id);
         if (!cat) return;
+        setButtonLoading(el, true);
         try {
             await bridge.send('saveCategory', {
                 data: { id: cat.id, name: cat.name, isActive, sortOrder: cat.sortOrder }
@@ -98,6 +99,7 @@ const settings = {
             await this.renderCategories(document.getElementById('settings-content'));
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
+            setButtonLoading(el, false);
         }
     },
 
@@ -122,13 +124,13 @@ const settings = {
             </div>`;
         footer.innerHTML = `
             <button class="btn btn-secondary" onclick="app.closeFormModal()">Cancelar</button>
-            <button class="btn btn-primary" onclick="settings.saveCategory(${id || 'null'})">Guardar</button>
+            <button class="btn btn-primary" onclick="settings.saveCategory(${id || 'null'}, this)">Guardar</button>
         `;
         modal.classList.add('active');
         document.getElementById('cat-name').focus();
     },
 
-    async saveCategory(id) {
+    async saveCategory(id, btn) {
         const name = document.getElementById('cat-name').value.trim();
         const isActive = document.getElementById('cat-active').checked;
 
@@ -137,6 +139,7 @@ const settings = {
             return;
         }
 
+        setButtonLoading(btn, true);
         try {
             await bridge.send('saveCategory', {
                 data: { id, name, isActive, sortOrder: 0 }
@@ -146,17 +149,20 @@ const settings = {
             await this.renderCategories(document.getElementById('settings-content'));
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
+            setButtonLoading(btn, false);
         }
     },
 
-    async deleteCategory(id) {
+    async deleteCategory(id, btn) {
         if (!confirm('Tem a certeza que pretende remover esta categoria?')) return;
+        setButtonLoading(btn, true);
         try {
             await bridge.send('deleteCategory', { id });
             showToast('Categoria removida', 'success');
             await this.renderCategories(document.getElementById('settings-content'));
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
+            setButtonLoading(btn, false);
         }
     },
 
@@ -211,13 +217,13 @@ const settings = {
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
                             <label class="toggle-switch" title="${prod.isActive ? 'Ativo' : 'Inativo'}">
-                                <input type="checkbox" ${prod.isActive ? 'checked' : ''} onchange="settings.toggleProductActive(${prod.id}, this.checked)">
+                                <input type="checkbox" ${prod.isActive ? 'checked' : ''} onchange="settings.toggleProductActive(${prod.id}, this.checked, this)">
                                 <span class="toggle-slider"></span>
                             </label>
                         </div>
                         <div class="settings-item-actions">
                             <button class="btn btn-outline btn-small" onclick="settings.showProductForm(${prod.id})">Editar</button>
-                            <button class="btn btn-danger btn-small" onclick="settings.deleteProduct(${prod.id})">Remover</button>
+                            <button class="btn btn-danger btn-small" onclick="settings.deleteProduct(${prod.id}, this)">Remover</button>
                         </div>
                     </div>`;
             });
@@ -228,9 +234,10 @@ const settings = {
         container.innerHTML = html;
     },
 
-    async toggleProductActive(id, isActive) {
+    async toggleProductActive(id, isActive, el) {
         const prod = this.products.find(p => p.id === id);
         if (!prod) return;
+        setButtonLoading(el, true);
         try {
             await bridge.send('saveProduct', {
                 data: {
@@ -242,6 +249,7 @@ const settings = {
             await this.renderProducts(document.getElementById('settings-content'));
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
+            setButtonLoading(el, false);
         }
     },
 
@@ -284,7 +292,7 @@ const settings = {
             </div>`;
         footer.innerHTML = `
             <button class="btn btn-secondary" onclick="app.closeFormModal()">Cancelar</button>
-            <button class="btn btn-primary" onclick="settings.saveProduct(${id || 'null'})">Guardar</button>
+            <button class="btn btn-primary" onclick="settings.saveProduct(${id || 'null'}, this)">Guardar</button>
         `;
         modal.classList.add('active');
         document.getElementById('prod-name').focus();
@@ -294,7 +302,7 @@ const settings = {
         }
     },
 
-    async saveProduct(id) {
+    async saveProduct(id, btn) {
         const name = document.getElementById('prod-name').value.trim();
         const categoryId = parseInt(document.getElementById('prod-category').value);
         const price = parseFloat(document.getElementById('prod-price').value) || 0;
@@ -306,6 +314,7 @@ const settings = {
             return;
         }
 
+        setButtonLoading(btn, true);
         try {
             await bridge.send('saveProduct', {
                 data: { id, name, categoryId, price: isGeneric ? 0 : price, isGeneric, isActive, sortOrder: 0 }
@@ -315,17 +324,20 @@ const settings = {
             await this.renderProducts(document.getElementById('settings-content'));
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
+            setButtonLoading(btn, false);
         }
     },
 
-    async deleteProduct(id) {
+    async deleteProduct(id, btn) {
         if (!confirm('Tem a certeza que pretende remover este produto?')) return;
+        setButtonLoading(btn, true);
         try {
             await bridge.send('deleteProduct', { id });
             showToast('Produto removido', 'success');
             await this.renderProducts(document.getElementById('settings-content'));
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
+            setButtonLoading(btn, false);
         }
     },
 
@@ -471,7 +483,7 @@ const settings = {
 
             <!-- GUARDAR -->
             <div style="margin-top: 16px; display: flex; gap: 8px;">
-                <button class="btn btn-primary" onclick="settings.saveReceiptLayout()">Guardar Layout</button>
+                <button class="btn btn-primary" onclick="settings.saveReceiptLayout(this)">Guardar Layout</button>
                 <button class="btn btn-outline" onclick="settings.renderReceiptLayout(document.getElementById('settings-content'))">Cancelar Alterações</button>
             </div>
         `;
@@ -608,7 +620,7 @@ const settings = {
         preview.innerHTML = lines.map(l => `<div class="receipt-line">${l}</div>`).join('');
     },
 
-    async saveReceiptLayout() {
+    async saveReceiptLayout(btn) {
         const data = {
             PrintMode: document.getElementById('receipt-print-mode').value,
             HeaderEnabled: String(document.getElementById('receipt-header-enabled').checked),
@@ -632,11 +644,14 @@ const settings = {
             FooterLine2: document.getElementById('receipt-f2').value
         };
 
+        setButtonLoading(btn, true);
         try {
             await bridge.send('saveSettings', { data });
             showToast('Layout do talão guardado!', 'success');
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
+        } finally {
+            setButtonLoading(btn, false);
         }
     },
 
@@ -703,9 +718,9 @@ const settings = {
             </div>
 
             <div style="display: flex; gap: 8px; margin-top: 16px;">
-                <button class="btn btn-primary" onclick="settings.savePrinterSettings()">Guardar</button>
-                <button class="btn btn-outline" onclick="settings.testPrint()">Teste de Impressão</button>
-                <button class="btn btn-secondary" onclick="settings.refreshPorts()">Atualizar Portas</button>
+                <button class="btn btn-primary" onclick="settings.savePrinterSettings(this)">Guardar</button>
+                <button class="btn btn-outline" onclick="settings.testPrint(this)">Teste de Impressão</button>
+                <button class="btn btn-secondary" onclick="settings.refreshPorts(this)">Atualizar Portas</button>
             </div>`;
     },
 
@@ -716,12 +731,13 @@ const settings = {
         el.textContent = val;
     },
 
-    async savePrinterSettings() {
+    async savePrinterSettings(btn) {
         const port = document.getElementById('printer-port').value;
         const baudRate = document.getElementById('printer-baud').value;
         const enabled = document.getElementById('printer-enabled').checked;
         const copies = document.getElementById('printer-copies-value').textContent;
 
+        setButtonLoading(btn, true);
         try {
             await bridge.send('saveSettings', {
                 data: { SerialPort: port, BaudRate: baudRate, PrinterEnabled: String(enabled), PrintCopies: copies }
@@ -729,10 +745,13 @@ const settings = {
             showToast('Configuração da impressora guardada!', 'success');
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
+        } finally {
+            setButtonLoading(btn, false);
         }
     },
 
-    async testPrint() {
+    async testPrint(btn) {
+        setButtonLoading(btn, true);
         try {
             const result = await bridge.send('testPrint');
             if (result.success) {
@@ -742,10 +761,13 @@ const settings = {
             }
         } catch (e) {
             showToast('Erro ao testar impressão: ' + e.message, 'error');
+        } finally {
+            setButtonLoading(btn, false);
         }
     },
 
-    async refreshPorts() {
+    async refreshPorts(btn) {
+        setButtonLoading(btn, true);
         await this.renderPrinter(document.getElementById('settings-content'));
         showToast('Portas atualizadas', 'info');
     },
@@ -765,14 +787,15 @@ const settings = {
                     <div class="input-with-keyboard"><input type="text" id="setting-event" class="form-input" value="${appSettings.EventName || 'Festa GRUDER 2026'}" placeholder="Ex: Festa de Verão 2026"><button class="btn-keyboard" data-target="setting-event" data-label="Nome do Evento">⌨</button></div>
                 </div>
                 <div style="margin-top: 20px;">
-                    <button class="btn btn-primary" onclick="settings.saveGeneralSettings()">Guardar</button>
+                    <button class="btn btn-primary" onclick="settings.saveGeneralSettings(this)">Guardar</button>
                 </div>
             </div>`;
     },
 
-    async saveGeneralSettings() {
+    async saveGeneralSettings(btn) {
         const eventName = document.getElementById('setting-event').value.trim();
 
+        setButtonLoading(btn, true);
         try {
             await bridge.send('saveSettings', {
                 data: { EventName: eventName }
@@ -781,6 +804,8 @@ const settings = {
             showToast('Definições guardadas!', 'success');
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
+        } finally {
+            setButtonLoading(btn, false);
         }
     }
 };

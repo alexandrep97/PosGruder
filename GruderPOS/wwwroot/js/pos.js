@@ -258,6 +258,8 @@ const pos = {
             return;
         }
 
+        const btn = document.getElementById('btn-pay');
+        setButtonLoading(btn, true);
         try {
             const total = this.getTotal();
             const data = {
@@ -291,6 +293,8 @@ const pos = {
 
         } catch (e) {
             showToast('Erro ao processar pagamento: ' + e.message, 'error');
+        } finally {
+            setButtonLoading(btn, false);
         }
     }
 };
