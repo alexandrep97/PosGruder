@@ -158,13 +158,16 @@ const history = {
 
     // ===== Cash Sessions =====
     async renderSessions(container) {
+        let rawSessions;
         try {
-            this.sessions = await bridge.send('getCashSessions');
+            rawSessions = await bridge.send('getCashSessions');
         } catch (e) {
-            this.sessions = [];
+            rawSessions = [];
         }
 
-        if (!this.sessions || this.sessions.length === 0) {
+        this.sessions = rawSessions || [];
+
+        if (this.sessions.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
@@ -173,10 +176,28 @@ const history = {
             return;
         }
 
+        const paymentLabels = { Cash: 'Dinheiro', Card: 'Cartão', MBWay: 'MB Way' };
+
         let html = '';
-        this.sessions.forEach(s => {
+        this.sessions.forEach(detail => {
+            const s = detail.session;
+            const breakdown = detail.paymentBreakdown || [];
             const isOpen = s.status === 'Open';
-            const expectedBalance = (s.openingBalance || 0) + (s.totalSales || 0);
+            const totalCaixa = s.closingBalance ?? ((s.openingBalance || 0) + (s.totalSales || 0));
+
+            let breakdownHtml = '';
+            if (breakdown.length > 0) {
+                breakdownHtml = `<div class="session-payment-breakdown">
+                    <div class="session-breakdown-label">Pagamentos</div>`;
+                breakdown.forEach(pm => {
+                    const label = paymentLabels[pm.method] || pm.method;
+                    breakdownHtml += `<div class="session-breakdown-row">
+                        <span>${label} (${pm.count})</span>
+                        <span>${formatCurrency(pm.total)}</span>
+                    </div>`;
+                });
+                breakdownHtml += `</div>`;
+            }
 
             html += `
                 <div class="session-card">
@@ -185,25 +206,22 @@ const history = {
                         <span class="session-status ${isOpen ? 'open' : 'closed'}">${isOpen ? 'Aberta' : 'Fechada'}</span>
                     </div>
                     <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
-                        Abertura: ${formatDateTime(s.openedAt)} ${s.closedAt ? ' · Fecho: ' + formatDateTime(s.closedAt) : ''}
+                        Abertura: ${formatDateTime(s.openedAt)}${s.closedAt ? ' · Fecho: ' + formatDateTime(s.closedAt) : ''}
                     </div>
-                    <div class="session-card-stats">
-                        <div class="session-stat">
-                            <div class="session-stat-value">${formatCurrency(s.openingBalance || 0)}</div>
-                            <div class="session-stat-label">Fundo Caixa</div>
+                    <div class="session-opening-balance">
+                        <span class="session-stat-label">Fundo de Caixa</span>
+                        <span class="session-stat-value">${formatCurrency(s.openingBalance || 0)}</span>
+                    </div>
+                    ${breakdownHtml}
+                    <div class="session-totals">
+                        <div class="session-total-row">
+                            <span>Total Vendas</span>
+                            <span class="text-success">${formatCurrency(s.totalSales || 0)}</span>
                         </div>
-                        <div class="session-stat">
-                            <div class="session-stat-value">${formatCurrency(s.totalSales || 0)}</div>
-                            <div class="session-stat-label">Vendas</div>
-                        </div>
-                        <div class="session-stat">
-                            <div class="session-stat-value">${s.totalTransactions || 0}</div>
-                            <div class="session-stat-label">Transações</div>
-                        </div>
-                        <div class="session-stat">
-                            <div class="session-stat-value text-success">${formatCurrency(s.closingBalance || expectedBalance)}</div>
-                            <div class="session-stat-label">Total</div>
-                        </div>
+                        ${!isOpen ? `<div class="session-total-row session-total-caixa">
+                            <span>Total Caixa</span>
+                            <span class="text-success">${formatCurrency(totalCaixa)}</span>
+                        </div>` : ''}
                     </div>
                     ${s.notes ? `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-light);">Notas: ${s.notes}</div>` : ''}
                 </div>`;
