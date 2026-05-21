@@ -59,7 +59,8 @@ const virtualKeyboard = {
     },
 
     _updateDisplay() {
-        document.getElementById('vk-display').textContent = this._buffer;
+        const el = document.getElementById('vk-display');
+        if (el) el.textContent = this._buffer;
     },
 
     _key(k) {
