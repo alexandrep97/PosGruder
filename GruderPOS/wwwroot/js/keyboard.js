@@ -4,6 +4,7 @@ const virtualKeyboard = {
     _buffer: '',
     _shift: false,
     _symbols: false,
+    _initialized: false,
 
     _rows: {
         lower: [
@@ -23,7 +24,7 @@ const virtualKeyboard = {
         symbols: [
             ['!','@','#','$','%','&','*','(',')','€'],
             ['_','-','=','+','[',']','/','?','|'],
-            [';',':','\'','"','<','>','!','ABC','DEL'],
+            [';',':','\'','"','<','>','^','ABC','DEL'],
             ['ABC','SPACE','.', ',']
         ]
     },
@@ -49,6 +50,7 @@ const virtualKeyboard = {
     _render() {
         const layer = this._symbols ? 'symbols' : (this._shift ? 'upper' : 'lower');
         const kb = document.getElementById('vk-keyboard');
+        if (!kb) return;
         kb.innerHTML = this._rows[layer].map(row =>
             `<div class="vk-row">${row.map(k =>
                 `<button class="${this._keyClass(k)}" onclick="virtualKeyboard._key(${JSON.stringify(k)})">${this._keyLabel(k)}</button>`
@@ -121,6 +123,8 @@ const virtualKeyboard = {
     },
 
     init() {
+        if (this._initialized) return;
+        this._initialized = true;
         document.addEventListener('click', e => {
             const btn = e.target.closest('.btn-keyboard');
             if (!btn) return;
