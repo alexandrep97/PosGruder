@@ -779,6 +779,40 @@ const settings = {
             appSettings = await bridge.send('getSettings');
         } catch (e) {}
 
+        const hasPin = !!(appSettings.SettingsPin);
+
+        const pinSection = hasPin ? `
+            <div class="form-group">
+                <label>PIN Atual</label>
+                <input type="password" id="pin-current" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric">
+            </div>
+            <div class="form-group">
+                <label>Novo PIN</label>
+                <input type="password" id="pin-new" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric">
+            </div>
+            <div class="form-group">
+                <label>Confirmar Novo PIN</label>
+                <input type="password" id="pin-confirm" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric">
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+                <button class="btn btn-primary" onclick="settings.savePin(this)">Alterar PIN</button>
+                <button class="btn btn-danger btn-small" onclick="settings.removePin(this)">Remover PIN</button>
+            </div>` : `
+            <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">
+                Sem PIN configurado. Definir um PIN protege o acesso às configurações.
+            </p>
+            <div class="form-group">
+                <label>Novo PIN (4 dígitos)</label>
+                <input type="password" id="pin-new" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric">
+            </div>
+            <div class="form-group">
+                <label>Confirmar PIN</label>
+                <input type="password" id="pin-confirm" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric">
+            </div>
+            <div style="margin-top:8px;">
+                <button class="btn btn-primary" onclick="settings.savePin(this)">Definir PIN</button>
+            </div>`;
+
         container.innerHTML = `
             <div class="settings-form">
                 <h3 style="font-size: 16px; margin-bottom: 20px;">Definições Gerais</h3>
@@ -789,6 +823,11 @@ const settings = {
                 <div style="margin-top: 20px;">
                     <button class="btn btn-primary" onclick="settings.saveGeneralSettings(this)">Guardar</button>
                 </div>
+            </div>
+
+            <div class="settings-form" style="margin-top:16px;">
+                <h3 style="font-size:16px; margin-bottom:16px;">Segurança</h3>
+                ${pinSection}
             </div>`;
     },
 
@@ -805,6 +844,55 @@ const settings = {
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
         } finally {
+            setButtonLoading(btn, false);
+        }
+    },
+
+    async savePin(btn) {
+        const currentInput = document.getElementById('pin-current');
+        const newPin = (document.getElementById('pin-new')?.value || '').trim();
+        const confirm = (document.getElementById('pin-confirm')?.value || '').trim();
+
+        if (currentInput) {
+            const currentPin = currentInput.value.trim();
+            if (currentPin !== app.settings.SettingsPin) {
+                showToast('PIN atual incorreto', 'error');
+                return;
+            }
+        }
+
+        if (!/^\d{4}$/.test(newPin)) {
+            showToast('O PIN deve ter exatamente 4 dígitos numéricos', 'warning');
+            return;
+        }
+
+        if (newPin !== confirm) {
+            showToast('Os PINs não coincidem', 'warning');
+            return;
+        }
+
+        setButtonLoading(btn, true);
+        try {
+            await bridge.send('saveSettings', { data: { SettingsPin: newPin } });
+            app.settings.SettingsPin = newPin;
+            showToast('PIN definido com sucesso!', 'success');
+            await this.renderGeneral(document.getElementById('settings-content'));
+        } catch (e) {
+            showToast('Erro: ' + e.message, 'error');
+            setButtonLoading(btn, false);
+        }
+    },
+
+    async removePin(btn) {
+        if (!confirm('Tem a certeza que pretende remover o PIN de acesso?')) return;
+        setButtonLoading(btn, true);
+        try {
+            await bridge.send('saveSettings', { data: { SettingsPin: '' } });
+            app.settings.SettingsPin = '';
+            showToast('PIN removido', 'success');
+            await this.renderGeneral(document.getElementById('settings-content'));
+        } catch (e) {
+            showToast('Erro: ' + e.message, 'error');
             setButtonLoading(btn, false);
         }
     }
