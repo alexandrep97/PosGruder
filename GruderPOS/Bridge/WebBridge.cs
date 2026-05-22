@@ -61,7 +61,9 @@ public class WebBridge
                 "getTransactions" => await HandleGetTransactions(root),
                 "getSessionTransactions" => await HandleGetSessionTransactions(root),
                 "getCashSessions" => await HandleGetCashSessions(),
-                "voidTransaction" => await HandleVoidTransaction(root),
+                "voidTransaction"    => await HandleVoidTransaction(root),
+                "reprintTransaction" => await HandleReprintTransaction(root),
+                "reprintSession"     => await HandleReprintSession(root),
                 "testPrint" => HandleTestPrint(),
                 "getSerialPorts" => HandleGetSerialPorts(),
                 "getSettings" => await HandleGetSettings(),
@@ -240,14 +242,18 @@ public class WebBridge
 
         var result = await _transactions.CreateAsync(transaction, items);
 
-        // Print receipt with layout config
-        try
+        // Print receipt in background so the response returns to JS immediately
+        var resultSnapshot = result;
+        _ = Task.Run(async () =>
         {
-            var allSettings = await _settings.GetAllAsync();
-            var printConfig = PrintLayoutConfig.FromSettings(allSettings);
-            _printer.PrintReceipt(result, printConfig);
-        }
-        catch { }
+            try
+            {
+                var allSettings = await _settings.GetAllAsync();
+                var printConfig = PrintLayoutConfig.FromSettings(allSettings);
+                _printer.PrintReceipt(resultSnapshot, printConfig);
+            }
+            catch { }
+        });
 
         return result;
     }
@@ -270,6 +276,47 @@ public class WebBridge
         var id = root.GetProperty("id").GetInt32();
         await _transactions.VoidAsync(id);
         return new { voided = true };
+    }
+
+    private async Task<object> HandleReprintTransaction(JsonElement root)
+    {
+        var id = root.GetProperty("id").GetInt32();
+        var transaction = await _transactions.GetByIdAsync(id)
+            ?? throw new Exception("Transação não encontrada");
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var allSettings = await _settings.GetAllAsync();
+                var printConfig = PrintLayoutConfig.FromSettings(allSettings);
+                _printer.PrintReceipt(transaction, printConfig);
+            }
+            catch { }
+        });
+
+        return new { reprinted = true };
+    }
+
+    private async Task<object> HandleReprintSession(JsonElement root)
+    {
+        var id = root.GetProperty("id").GetInt32();
+        var session = await _cashSessions.GetByIdAsync(id)
+            ?? throw new Exception("Sessão não encontrada");
+        var transactions = await _transactions.GetBySessionAsync(id);
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var allSettings = await _settings.GetAllAsync();
+                var printConfig = PrintLayoutConfig.FromSettings(allSettings);
+                _printer.PrintCashSessionReport(session, transactions, printConfig);
+            }
+            catch { }
+        });
+
+        return new { reprinted = true };
     }
 
     // Printer
