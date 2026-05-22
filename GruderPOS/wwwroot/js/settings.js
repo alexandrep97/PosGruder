@@ -779,7 +779,7 @@ const settings = {
             appSettings = await bridge.send('getSettings');
         } catch (e) {}
 
-        const hasPin = !!(appSettings.SettingsPin);
+        const hasPin = !!(app.settings.SettingsPin);
 
         const pinSection = hasPin ? `
             <div class="form-group">

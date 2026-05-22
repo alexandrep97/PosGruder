@@ -12,9 +12,11 @@ const pinAuth = {
             return Promise.resolve();
         }
         if (this._resolve) {
+            const oldReject = this._reject;
             return new Promise((resolve, reject) => {
                 this._resolve = resolve;
                 this._reject = reject;
+                oldReject(new Error('cancelled'));
             });
         }
         return new Promise((resolve, reject) => {
