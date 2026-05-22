@@ -20,6 +20,7 @@ const app = {
         };
 
         virtualKeyboard.init();
+        pinNumpad.init();
     },
 
     async loadSettings() {

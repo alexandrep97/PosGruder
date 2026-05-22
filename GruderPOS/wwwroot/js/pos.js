@@ -285,14 +285,13 @@ const pos = {
         const total = this._pendingPayment.totalAmount;
         const given = parseFloat(input.value) || 0;
 
+        confirmBtn.disabled = false;
         if (given >= total && given > 0) {
             resultEl.textContent = formatCurrency(given - total);
             resultEl.style.color = 'var(--success)';
-            confirmBtn.disabled = false;
         } else {
             resultEl.textContent = '---';
             resultEl.style.color = 'var(--text-muted)';
-            confirmBtn.disabled = true;
         }
     },
 

@@ -100,3 +100,65 @@ const pinAuth = {
         }
     }
 };
+
+// ===== PIN Input Numpad: fills PIN form fields =====
+const pinNumpad = {
+    _targetId: null,
+    _digits: '',
+
+    open(targetId, label) {
+        this._targetId = targetId;
+        this._digits = '';
+        document.getElementById('pin-input-label').textContent = label || 'PIN';
+        this._updateIndicator();
+        document.getElementById('modal-pin-input').classList.add('active');
+    },
+
+    _onDigit(d) {
+        if (this._digits.length >= 4) return;
+        this._digits += d;
+        this._updateIndicator();
+        if (this._digits.length === 4) {
+            this._confirm();
+        }
+    },
+
+    _onBackspace() {
+        if (this._digits.length === 0) return;
+        this._digits = this._digits.slice(0, -1);
+        this._updateIndicator();
+    },
+
+    _updateIndicator() {
+        document.querySelectorAll('#pin-input-dots .pin-dot').forEach((dot, i) => {
+            dot.classList.toggle('filled', i < this._digits.length);
+        });
+    },
+
+    _confirm() {
+        const el = document.getElementById(this._targetId);
+        if (el) {
+            el.value = this._digits;
+            el.dispatchEvent(new Event('input'));
+        }
+        this._close();
+    },
+
+    _cancel() {
+        this._close();
+    },
+
+    _close() {
+        this._targetId = null;
+        this._digits = '';
+        document.getElementById('modal-pin-input').classList.remove('active');
+    },
+
+    init() {
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.btn-numpad');
+            if (!btn) return;
+            this.open(btn.dataset.target, btn.dataset.label || 'PIN');
+        });
+    }
+};
