@@ -42,17 +42,22 @@ const app = {
     },
 
     navigate(page) {
-        // Hide all pages
+        if (page === 'settings') {
+            pinAuth.request().then(() => this._doNavigate('settings')).catch(() => {});
+            return;
+        }
+        this._doNavigate(page);
+    },
+
+    _doNavigate(page) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
-        // Show selected page
         document.getElementById(`page-${page}`).classList.add('active');
         document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
 
         this.currentPage = page;
 
-        // Initialize page if needed
         if (page === 'history') history.init();
         if (page === 'settings') settings.init();
         if (page === 'pos') pos.refreshProducts();
