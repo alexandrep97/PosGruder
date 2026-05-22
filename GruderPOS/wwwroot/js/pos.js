@@ -5,6 +5,7 @@ const pos = {
     cart: [],
     selectedCategory: null,
     paymentMethod: 'Cash',
+    _pendingPayment: null,
 
     async init() {
         await this.loadCategories();
@@ -162,8 +163,8 @@ const pos = {
         const payBtn = document.getElementById('btn-pay');
         const total = this.getTotal();
 
-        totalEl.textContent = formatCurrency(total);
-        payTotalEl.textContent = formatCurrency(total);
+        if (totalEl) totalEl.textContent = formatCurrency(total);
+        if (payTotalEl) payTotalEl.textContent = formatCurrency(total);
         payBtn.disabled = this.cart.length === 0;
 
         if (this.cart.length === 0) {
@@ -247,6 +248,76 @@ const pos = {
         this.renderProducts();
     },
 
+    openChangeModal() {
+        const total = this._pendingPayment.totalAmount;
+        document.getElementById('change-total-display').textContent = formatCurrency(total);
+        document.getElementById('change-amount-input').value = '';
+        document.getElementById('change-result').textContent = '---';
+        document.getElementById('change-result').style.color = 'var(--text-muted)';
+        document.getElementById('btn-confirm-change').disabled = true;
+        document.getElementById('modal-change').classList.add('active');
+    },
+
+    closeChangeModal() {
+        document.getElementById('modal-change').classList.remove('active');
+        this._pendingPayment = null;
+    },
+
+    changeNumpadInput(key) {
+        const input = document.getElementById('change-amount-input');
+        let val = input.value;
+        if (key === 'del') {
+            input.value = val.slice(0, -1);
+        } else if (key === '.') {
+            if (!val.includes('.')) input.value = val + '.';
+        } else {
+            const parts = val.split('.');
+            if (parts.length > 1 && parts[1].length >= 2) return;
+            input.value = val + key;
+        }
+        this.updateChangeDisplay();
+    },
+
+    updateChangeDisplay() {
+        const input = document.getElementById('change-amount-input');
+        const resultEl = document.getElementById('change-result');
+        const confirmBtn = document.getElementById('btn-confirm-change');
+        const total = this._pendingPayment ? this._pendingPayment.totalAmount : 0;
+        const given = parseFloat(input.value) || 0;
+
+        if (given >= total && given > 0) {
+            resultEl.textContent = formatCurrency(given - total);
+            resultEl.style.color = 'var(--success)';
+            confirmBtn.disabled = false;
+        } else {
+            resultEl.textContent = '---';
+            resultEl.style.color = 'var(--text-muted)';
+            confirmBtn.disabled = true;
+        }
+    },
+
+    async confirmCashPayment() {
+        if (!this._pendingPayment) return;
+        const btn = document.getElementById('btn-confirm-change');
+        setButtonLoading(btn, true);
+        try {
+            const { totalAmount } = this._pendingPayment;
+            await bridge.send('processTransaction', { data: this._pendingPayment });
+            this.closeChangeModal();
+            showPaymentSuccess(totalAmount);
+            app.currentSession.totalSales = (app.currentSession.totalSales || 0) + totalAmount;
+            app.currentSession.totalTransactions = (app.currentSession.totalTransactions || 0) + 1;
+            app.updateSessionUI();
+            this.cart = [];
+            this.setPaymentMethod('Cash');
+            this.renderCart();
+            this.renderProducts();
+        } catch (e) {
+            showToast('Erro ao processar pagamento: ' + e.message, 'error');
+            setButtonLoading(btn, false);
+        }
+    },
+
     // Process payment
     async processPayment() {
         if (this.cart.length === 0) return;
@@ -286,8 +357,12 @@ const pos = {
             app.currentSession.totalTransactions = (app.currentSession.totalTransactions || 0) + 1;
             app.updateSessionUI();
 
-            // Clear cart
+            // Restore button before renderCart so #btn-pay-total is back in DOM
+            setButtonLoading(btn, false);
+
+            // Clear cart and reset payment method
             this.cart = [];
+            this.setPaymentMethod('Cash');
             this.renderCart();
             this.renderProducts();
 
