@@ -843,6 +843,47 @@ body {
     color: var(--danger);
 }
 
+/* ===== PIN Modal ===== */
+.pin-dots {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 8px 0 16px;
+}
+
+.pin-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: transparent;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.pin-dot.filled {
+    background: var(--primary);
+    border-color: var(--primary-dark);
+}
+
+.pin-error {
+    color: var(--danger);
+    font-size: 13px;
+    min-height: 18px;
+    margin-bottom: 8px;
+}
+
+@keyframes pin-shake {
+    0%, 100% { transform: translateX(0); }
+    20%       { transform: translateX(-8px); }
+    40%       { transform: translateX(8px); }
+    60%       { transform: translateX(-6px); }
+    80%       { transform: translateX(6px); }
+}
+
+.pin-dots.shake {
+    animation: pin-shake 0.5s ease;
+}
+
 /* ===== Forms ===== */
 .form-group {
     margin-bottom: 16px;
