@@ -857,7 +857,7 @@ body {
     border-radius: 50%;
     border: 2px solid var(--border);
     background: transparent;
-    transition: background 0.15s, border-color 0.15s;
+    transition: var(--transition);
 }
 
 .pin-dot.filled {
