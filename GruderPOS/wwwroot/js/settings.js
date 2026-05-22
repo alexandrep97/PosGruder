@@ -851,7 +851,7 @@ const settings = {
     async savePin(btn) {
         const currentInput = document.getElementById('pin-current');
         const newPin = (document.getElementById('pin-new')?.value || '').trim();
-        const confirm = (document.getElementById('pin-confirm')?.value || '').trim();
+        const confirmPin = (document.getElementById('pin-confirm')?.value || '').trim();
 
         if (currentInput) {
             const currentPin = currentInput.value.trim();
@@ -866,7 +866,7 @@ const settings = {
             return;
         }
 
-        if (newPin !== confirm) {
+        if (newPin !== confirmPin) {
             showToast('Os PINs não coincidem', 'warning');
             return;
         }
