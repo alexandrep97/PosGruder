@@ -3,6 +3,8 @@ const pinAuth = {
     _digits: '',
     _resolve: null,
     _reject: null,
+    _checking: false,
+    _shakeTimer: null,
 
     request() {
         const storedPin = app.settings.SettingsPin;
@@ -18,12 +20,25 @@ const pinAuth = {
 
     _open() {
         this._digits = '';
+        this._checking = false;
+        if (this._shakeTimer) {
+            clearTimeout(this._shakeTimer);
+            this._shakeTimer = null;
+        }
         this._updateIndicator();
         document.getElementById('pin-error').textContent = '';
         document.getElementById('modal-pin').classList.add('active');
     },
 
     cancel() {
+        if (this._shakeTimer) {
+            clearTimeout(this._shakeTimer);
+            this._shakeTimer = null;
+        }
+        this._checking = false;
+        this._digits = '';
+        this._updateIndicator();
+        document.getElementById('pin-error').textContent = '';
         document.getElementById('modal-pin').classList.remove('active');
         if (this._reject) {
             this._reject(new Error('cancelled'));
@@ -33,7 +48,7 @@ const pinAuth = {
     },
 
     _onDigit(d) {
-        if (this._digits.length >= 4) return;
+        if (this._checking || this._digits.length >= 4) return;
         this._digits += d;
         this._updateIndicator();
         if (this._digits.length === 4) {
@@ -42,7 +57,7 @@ const pinAuth = {
     },
 
     _onBackspace() {
-        if (this._digits.length === 0) return;
+        if (this._checking || this._digits.length === 0) return;
         this._digits = this._digits.slice(0, -1);
         this._updateIndicator();
     },
@@ -62,10 +77,13 @@ const pinAuth = {
             this._reject = null;
             resolve();
         } else {
+            this._checking = true;
             const dots = document.getElementById('pin-dots');
             document.getElementById('pin-error').textContent = 'PIN incorreto';
             dots.classList.add('shake');
-            setTimeout(() => {
+            this._shakeTimer = setTimeout(() => {
+                this._shakeTimer = null;
+                this._checking = false;
                 dots.classList.remove('shake');
                 document.getElementById('pin-error').textContent = '';
                 this._digits = '';
