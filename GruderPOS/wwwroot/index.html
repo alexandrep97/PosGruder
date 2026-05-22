@@ -204,6 +204,42 @@
         </div>
     </div>
 
+    <!-- Modal: PIN Security -->
+    <div id="modal-pin" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Definições</h3>
+            </div>
+            <div class="modal-body" style="text-align:center;">
+                <p style="margin-bottom:16px; color:var(--text-light);">Introduza o PIN de acesso</p>
+                <div class="pin-dots" id="pin-dots">
+                    <span class="pin-dot"></span>
+                    <span class="pin-dot"></span>
+                    <span class="pin-dot"></span>
+                    <span class="pin-dot"></span>
+                </div>
+                <p class="pin-error" id="pin-error"></p>
+                <div class="numpad">
+                    <button class="numpad-btn" onclick="pinAuth._onDigit('1')">1</button>
+                    <button class="numpad-btn" onclick="pinAuth._onDigit('2')">2</button>
+                    <button class="numpad-btn" onclick="pinAuth._onDigit('3')">3</button>
+                    <button class="numpad-btn" onclick="pinAuth._onDigit('4')">4</button>
+                    <button class="numpad-btn" onclick="pinAuth._onDigit('5')">5</button>
+                    <button class="numpad-btn" onclick="pinAuth._onDigit('6')">6</button>
+                    <button class="numpad-btn" onclick="pinAuth._onDigit('7')">7</button>
+                    <button class="numpad-btn" onclick="pinAuth._onDigit('8')">8</button>
+                    <button class="numpad-btn" onclick="pinAuth._onDigit('9')">9</button>
+                    <button class="numpad-btn" style="visibility:hidden;" disabled></button>
+                    <button class="numpad-btn" onclick="pinAuth._onDigit('0')">0</button>
+                    <button class="numpad-btn numpad-delete" onclick="pinAuth._onBackspace()">&#x232B;</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="pinAuth.cancel()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notifications -->
     <div id="toast-container" class="toast-container"></div>
 
@@ -213,5 +249,6 @@
     <script src="js/pos.js"></script>
     <script src="js/settings.js"></script>
     <script src="js/history.js"></script>
+    <script src="js/pin.js"></script>
 </body>
 </html>
