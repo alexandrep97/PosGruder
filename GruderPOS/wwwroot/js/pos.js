@@ -323,10 +323,28 @@ const pos = {
     async processPayment() {
         if (this.cart.length === 0) return;
 
-        // Check if session is open
         if (!app.currentSession || !app.currentSession.id) {
             showToast('Abra a caixa antes de processar pagamentos', 'warning');
             app.showOpenSessionModal();
+            return;
+        }
+
+        if (this.paymentMethod === 'Cash' && app.settings.ShowChangeCalculator === 'true') {
+            const total = this.getTotal();
+            this._pendingPayment = {
+                cashSessionId: app.currentSession.id,
+                totalAmount: total,
+                paymentMethod: this.paymentMethod,
+                items: this.cart.map(item => ({
+                    productId: item.productId,
+                    productName: item.productName,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice,
+                    totalPrice: item.totalPrice,
+                    isGenericItem: item.isGenericItem
+                }))
+            };
+            this.openChangeModal();
             return;
         }
 
@@ -349,24 +367,15 @@ const pos = {
             };
 
             await bridge.send('processTransaction', { data });
-
-            // Show success animation
             showPaymentSuccess(total);
-
-            // Update session info
             app.currentSession.totalSales = (app.currentSession.totalSales || 0) + total;
             app.currentSession.totalTransactions = (app.currentSession.totalTransactions || 0) + 1;
             app.updateSessionUI();
-
-            // Restore button before renderCart so #btn-pay-total is back in DOM
             setButtonLoading(btn, false);
-
-            // Clear cart and reset payment method
             this.cart = [];
             this.setPaymentMethod('Cash');
             this.renderCart();
             this.renderProducts();
-
         } catch (e) {
             showToast('Erro ao processar pagamento: ' + e.message, 'error');
         } finally {
