@@ -123,6 +123,7 @@ const history = {
                 html += `
                     <div class="transaction-actions">
                         <button class="btn btn-danger btn-small" onclick="event.stopPropagation(); history.voidTransaction(${t.id}, this)">Anular</button>
+                        <button class="btn btn-outline btn-small" onclick="event.stopPropagation(); history.reprintTransaction(${t.id}, this)">Reimprimir</button>
                     </div>`;
             }
 
@@ -152,6 +153,18 @@ const history = {
             await this.filterTransactions();
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
+            setButtonLoading(btn, false);
+        }
+    },
+
+    async reprintTransaction(id, btn) {
+        setButtonLoading(btn, true);
+        try {
+            await bridge.send('reprintTransaction', { id });
+            showToast('Talão enviado para impressão', 'success');
+        } catch (e) {
+            showToast('Erro: ' + e.message, 'error');
+        } finally {
             setButtonLoading(btn, false);
         }
     },
