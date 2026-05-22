@@ -61,3 +61,6 @@ GruderPOS/GruderPOS.csproj.user
 
 .superpowers/
 docs/
+
+# Installer output
+installers/

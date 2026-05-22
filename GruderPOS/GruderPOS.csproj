@@ -9,6 +9,7 @@
     <ApplicationIcon>wwwroot\assets\logo.ico</ApplicationIcon>
     <RootNamespace>GruderPOS</RootNamespace>
     <AssemblyName>GruderPOS</AssemblyName>
+    <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
