@@ -1136,6 +1136,7 @@ body {
 .transaction-actions {
     display: flex;
     justify-content: flex-end;
+    gap: 8px;
     margin-top: 10px;
 }
 
@@ -1593,7 +1594,8 @@ button, a, input, select, label, .product-card, .print-mode-card, .payment-btn, 
     width: auto;
 }
 
-.btn-keyboard {
+.btn-keyboard,
+.btn-numpad {
     flex-shrink: 0;
     min-width: 44px;
     min-height: 44px;
@@ -1612,7 +1614,8 @@ button, a, input, select, label, .product-card, .print-mode-card, .payment-btn, 
     touch-action: manipulation;
 }
 
-.btn-keyboard:active {
+.btn-keyboard:active,
+.btn-numpad:active {
     transform: scale(0.95);
     background: var(--primary);
     color: var(--secondary);
