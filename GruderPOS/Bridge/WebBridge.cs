@@ -284,6 +284,9 @@ public class WebBridge
         var transaction = await _transactions.GetByIdAsync(id)
             ?? throw new Exception("Transação não encontrada");
 
+        if (transaction.Voided)
+            throw new Exception("Não é possível reimprimir uma transação anulada");
+
         _ = Task.Run(async () =>
         {
             try
