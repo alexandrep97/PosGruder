@@ -240,6 +240,77 @@
         </div>
     </div>
 
+    <!-- Modal: PIN Input Numpad -->
+    <div id="modal-pin-input" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="pin-input-label">PIN</h3>
+            </div>
+            <div class="modal-body" style="text-align:center;">
+                <div class="pin-dots" id="pin-input-dots">
+                    <span class="pin-dot"></span>
+                    <span class="pin-dot"></span>
+                    <span class="pin-dot"></span>
+                    <span class="pin-dot"></span>
+                </div>
+                <div class="numpad">
+                    <button class="numpad-btn" onclick="pinNumpad._onDigit('1')">1</button>
+                    <button class="numpad-btn" onclick="pinNumpad._onDigit('2')">2</button>
+                    <button class="numpad-btn" onclick="pinNumpad._onDigit('3')">3</button>
+                    <button class="numpad-btn" onclick="pinNumpad._onDigit('4')">4</button>
+                    <button class="numpad-btn" onclick="pinNumpad._onDigit('5')">5</button>
+                    <button class="numpad-btn" onclick="pinNumpad._onDigit('6')">6</button>
+                    <button class="numpad-btn" onclick="pinNumpad._onDigit('7')">7</button>
+                    <button class="numpad-btn" onclick="pinNumpad._onDigit('8')">8</button>
+                    <button class="numpad-btn" onclick="pinNumpad._onDigit('9')">9</button>
+                    <button class="numpad-btn" style="visibility:hidden;" disabled></button>
+                    <button class="numpad-btn" onclick="pinNumpad._onDigit('0')">0</button>
+                    <button class="numpad-btn numpad-delete" onclick="pinNumpad._onBackspace()">&#x232B;</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="pinNumpad._cancel()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Change Calculator -->
+    <div id="modal-change" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Troco</h3>
+            </div>
+            <div class="modal-body" style="text-align:center;">
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:6px;">Total da conta</p>
+                <div id="change-total-display" style="font-size:28px; font-weight:800; margin-bottom:20px;"></div>
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:6px;">Valor entregue pelo cliente</p>
+                <input type="text" id="change-amount-input" readonly class="form-input form-input-large" placeholder="0,00" style="text-align:center; margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:12px 16px; background:var(--bg); border-radius:var(--radius-sm);">
+                    <span style="font-size:14px; font-weight:600;">Troco</span>
+                    <span id="change-result" style="font-size:20px; font-weight:800; color:var(--text-muted);">---</span>
+                </div>
+                <div class="numpad">
+                    <button class="numpad-btn" onclick="pos.changeNumpadInput('1')">1</button>
+                    <button class="numpad-btn" onclick="pos.changeNumpadInput('2')">2</button>
+                    <button class="numpad-btn" onclick="pos.changeNumpadInput('3')">3</button>
+                    <button class="numpad-btn" onclick="pos.changeNumpadInput('4')">4</button>
+                    <button class="numpad-btn" onclick="pos.changeNumpadInput('5')">5</button>
+                    <button class="numpad-btn" onclick="pos.changeNumpadInput('6')">6</button>
+                    <button class="numpad-btn" onclick="pos.changeNumpadInput('7')">7</button>
+                    <button class="numpad-btn" onclick="pos.changeNumpadInput('8')">8</button>
+                    <button class="numpad-btn" onclick="pos.changeNumpadInput('9')">9</button>
+                    <button class="numpad-btn" onclick="pos.changeNumpadInput('.')">.</button>
+                    <button class="numpad-btn" onclick="pos.changeNumpadInput('0')">0</button>
+                    <button class="numpad-btn numpad-delete" onclick="pos.changeNumpadInput('del')">&#x232B;</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="pos.closeChangeModal()">Cancelar</button>
+                <button id="btn-confirm-change" class="btn btn-success" onclick="pos.confirmCashPayment()" disabled>Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notifications -->
     <div id="toast-container" class="toast-container"></div>
 
