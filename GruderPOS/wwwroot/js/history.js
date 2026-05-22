@@ -169,6 +169,18 @@ const history = {
         }
     },
 
+    async reprintSession(id, btn) {
+        setButtonLoading(btn, true);
+        try {
+            await bridge.send('reprintSession', { id });
+            showToast('Relatório enviado para impressão', 'success');
+        } catch (e) {
+            showToast('Erro: ' + e.message, 'error');
+        } finally {
+            setButtonLoading(btn, false);
+        }
+    },
+
     // ===== Cash Sessions =====
     async renderSessions(container) {
         let rawSessions;
@@ -237,6 +249,10 @@ const history = {
                         </div>` : ''}
                     </div>
                     ${s.notes ? `<div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-light);">Notas: ${s.notes}</div>` : ''}
+                    ${!isOpen ? `
+                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+                            <button class="btn btn-outline btn-small" onclick="history.reprintSession(${s.id}, this)">Reimprimir Relatório</button>
+                        </div>` : ''}
                 </div>`;
         });
 
