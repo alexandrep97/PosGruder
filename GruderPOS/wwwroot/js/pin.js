@@ -11,6 +11,12 @@ const pinAuth = {
         if (!storedPin) {
             return Promise.resolve();
         }
+        if (this._resolve) {
+            return new Promise((resolve, reject) => {
+                this._resolve = resolve;
+                this._reject = reject;
+            });
+        }
         return new Promise((resolve, reject) => {
             this._resolve = resolve;
             this._reject = reject;

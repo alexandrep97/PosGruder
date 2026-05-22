@@ -43,7 +43,7 @@ const app = {
 
     navigate(page) {
         if (page === 'settings') {
-            pinAuth.request().then(() => this._doNavigate('settings')).catch(() => {});
+            pinAuth.request().then(() => this._doNavigate('settings')).catch(e => { if (e?.message !== 'cancelled') console.error('PIN auth error:', e); });
             return;
         }
         this._doNavigate(page);
