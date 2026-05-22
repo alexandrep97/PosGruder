@@ -249,13 +249,12 @@ const pos = {
     },
 
     openChangeModal() {
+        if (!this._pendingPayment) return;
         const total = this._pendingPayment.totalAmount;
         document.getElementById('change-total-display').textContent = formatCurrency(total);
         document.getElementById('change-amount-input').value = '';
-        document.getElementById('change-result').textContent = '---';
-        document.getElementById('change-result').style.color = 'var(--text-muted)';
-        document.getElementById('btn-confirm-change').disabled = true;
         document.getElementById('modal-change').classList.add('active');
+        this.updateChangeDisplay();
     },
 
     closeChangeModal() {
@@ -282,7 +281,8 @@ const pos = {
         const input = document.getElementById('change-amount-input');
         const resultEl = document.getElementById('change-result');
         const confirmBtn = document.getElementById('btn-confirm-change');
-        const total = this._pendingPayment ? this._pendingPayment.totalAmount : 0;
+        if (!this._pendingPayment) return;
+        const total = this._pendingPayment.totalAmount;
         const given = parseFloat(input.value) || 0;
 
         if (given >= total && given > 0) {
@@ -314,6 +314,7 @@ const pos = {
             this.renderProducts();
         } catch (e) {
             showToast('Erro ao processar pagamento: ' + e.message, 'error');
+        } finally {
             setButtonLoading(btn, false);
         }
     },
