@@ -784,15 +784,15 @@ const settings = {
         const pinSection = hasPin ? `
             <div class="form-group">
                 <label>PIN Atual</label>
-                <input type="password" id="pin-current" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric">
+                <div class="input-with-keyboard"><input type="password" id="pin-current" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric"><button class="btn-numpad" data-target="pin-current" data-label="PIN Atual">⌨</button></div>
             </div>
             <div class="form-group">
                 <label>Novo PIN</label>
-                <input type="password" id="pin-new" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric">
+                <div class="input-with-keyboard"><input type="password" id="pin-new" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric"><button class="btn-numpad" data-target="pin-new" data-label="Novo PIN">⌨</button></div>
             </div>
             <div class="form-group">
                 <label>Confirmar Novo PIN</label>
-                <input type="password" id="pin-confirm" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric">
+                <div class="input-with-keyboard"><input type="password" id="pin-confirm" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric"><button class="btn-numpad" data-target="pin-confirm" data-label="Confirmar Novo PIN">⌨</button></div>
             </div>
             <div style="display:flex; gap:8px; margin-top:8px;">
                 <button class="btn btn-primary" onclick="settings.savePin(this)">Alterar PIN</button>
@@ -803,11 +803,11 @@ const settings = {
             </p>
             <div class="form-group">
                 <label>Novo PIN (4 dígitos)</label>
-                <input type="password" id="pin-new" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric">
+                <div class="input-with-keyboard"><input type="password" id="pin-new" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric"><button class="btn-numpad" data-target="pin-new" data-label="Novo PIN">⌨</button></div>
             </div>
             <div class="form-group">
                 <label>Confirmar PIN</label>
-                <input type="password" id="pin-confirm" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric">
+                <div class="input-with-keyboard"><input type="password" id="pin-confirm" class="form-input" maxlength="4" placeholder="••••" inputmode="numeric"><button class="btn-numpad" data-target="pin-confirm" data-label="Confirmar PIN">⌨</button></div>
             </div>
             <div style="margin-top:8px;">
                 <button class="btn btn-primary" onclick="settings.savePin(this)">Definir PIN</button>
@@ -819,6 +819,16 @@ const settings = {
                 <div class="form-group">
                     <label>Nome do Evento / Festa</label>
                     <div class="input-with-keyboard"><input type="text" id="setting-event" class="form-input" value="${appSettings.EventName || 'Festa GRUDER 2026'}" placeholder="Ex: Festa de Verão 2026"><button class="btn-keyboard" data-target="setting-event" data-label="Nome do Evento">⌨</button></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-top:1px solid var(--bg-dark); margin-top:8px;">
+                    <div>
+                        <span style="font-size:13px; font-weight:600;">Apresentar troco</span>
+                        <div style="font-size:11px; color:var(--text-muted);">Solicita o valor entregue pelo cliente em pagamentos a dinheiro</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="setting-show-change" ${appSettings.ShowChangeCalculator === 'true' ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
                 <div style="margin-top: 20px;">
                     <button class="btn btn-primary" onclick="settings.saveGeneralSettings(this)">Guardar</button>
@@ -833,13 +843,15 @@ const settings = {
 
     async saveGeneralSettings(btn) {
         const eventName = document.getElementById('setting-event').value.trim();
+        const showChange = document.getElementById('setting-show-change').checked;
 
         setButtonLoading(btn, true);
         try {
             await bridge.send('saveSettings', {
-                data: { EventName: eventName }
+                data: { EventName: eventName, ShowChangeCalculator: String(showChange) }
             });
             app.settings.EventName = eventName;
+            app.settings.ShowChangeCalculator = String(showChange);
             showToast('Definições guardadas!', 'success');
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
