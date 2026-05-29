@@ -223,7 +223,10 @@ public class WebBridge
         {
             CashSessionId = data.GetProperty("cashSessionId").GetInt32(),
             TotalAmount = data.GetProperty("totalAmount").GetDouble(),
-            PaymentMethod = data.TryGetProperty("paymentMethod", out var pm) ? pm.GetString() ?? "Cash" : "Cash"
+            PaymentMethod = data.TryGetProperty("paymentMethod", out var pm) ? pm.GetString() ?? "Cash" : "Cash",
+            CustomerNumber = data.TryGetProperty("customerNumber", out var cn) && cn.ValueKind != JsonValueKind.Null
+                ? cn.GetInt32()
+                : null
         };
 
         var items = new List<TransactionItem>();

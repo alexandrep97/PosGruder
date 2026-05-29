@@ -21,10 +21,10 @@ public class TransactionRepository
         transaction.TransactionNumber = maxNum + 1;
 
         var transactionId = await conn.ExecuteScalarAsync<int>(@"
-            INSERT INTO Transactions (CashSessionId, TransactionNumber, TotalAmount, PaymentMethod)
-            VALUES (@CashSessionId, @TransactionNumber, @TotalAmount, @PaymentMethod);
+            INSERT INTO Transactions (CashSessionId, TransactionNumber, TotalAmount, PaymentMethod, CustomerNumber)
+            VALUES (@CashSessionId, @TransactionNumber, @TotalAmount, @PaymentMethod, @CustomerNumber);
             SELECT last_insert_rowid();",
-            new { transaction.CashSessionId, transaction.TransactionNumber, transaction.TotalAmount, transaction.PaymentMethod },
+            new { transaction.CashSessionId, transaction.TransactionNumber, transaction.TotalAmount, transaction.PaymentMethod, transaction.CustomerNumber },
             dbTransaction);
 
         transaction.Id = transactionId;

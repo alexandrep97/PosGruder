@@ -72,6 +72,7 @@ const bridge = {
                 ShowDate: 'true', ShowSession: 'true', ShowReceiptNumber: 'true',
                 ShowTicketNumber: 'true', ShowGridHeader: 'true',
                 ShowPaymentMethod: 'true', ShowTotals: 'true',
+                CustomerNumberEnabled: 'false', ShowCustomerNumber: 'true',
                 FooterEnabled: 'true', FooterLine1: 'Obrigado pela preferencia!', FooterLine2: 'GRUDER - 1977'
             },
             getCashSessions: [{ session: { id: 1, openedAt: '2026-01-01 09:00:00', closedAt: '2026-01-01 18:00:00', openingBalance: 50, closingBalance: 200, totalSales: 150, totalTransactions: 3, status: 'Closed', notes: null }, paymentBreakdown: [{ method: 'Cash', total: 100, count: 2 }, { method: 'Card', total: 50, count: 1 }] }],
