@@ -26,6 +26,7 @@ public class PrintLayoutConfig
     public bool ShowSession { get; set; } = true;
     public bool ShowReceiptNumber { get; set; } = true;
     public bool ShowTicketNumber { get; set; } = true;     // Apenas em Individual
+    public bool ShowCustomerNumber { get; set; } = true;
     public bool ShowGridHeader { get; set; } = true;       // Apenas em Complete
     public bool ShowPaymentMethod { get; set; } = true;
     public bool ShowTotals { get; set; } = true;
@@ -56,6 +57,7 @@ public class PrintLayoutConfig
             ShowSession = settings.GetValueOrDefault("ShowSession", "true") == "true",
             ShowReceiptNumber = settings.GetValueOrDefault("ShowReceiptNumber", "true") == "true",
             ShowTicketNumber = settings.GetValueOrDefault("ShowTicketNumber", "true") == "true",
+            ShowCustomerNumber = settings.GetValueOrDefault("ShowCustomerNumber", "true") == "true",
             ShowGridHeader = settings.GetValueOrDefault("ShowGridHeader", "true") == "true",
             ShowPaymentMethod = settings.GetValueOrDefault("ShowPaymentMethod", "true") == "true",
             ShowTotals = settings.GetValueOrDefault("ShowTotals", "true") == "true",
@@ -149,6 +151,7 @@ public class ReceiptPrinter
                 _serial.WriteText($"{config.BodyLine2}\n");
         }
 
+        PrintCustomerNumberBlock(transaction, config);
         PrintLine('-');
 
         // Info da transação
@@ -267,6 +270,7 @@ public class ReceiptPrinter
                         _serial.WriteText($"{config.BodyLine2}\n");
                 }
 
+                PrintCustomerNumberBlock(transaction, config);
                 PrintLine('-');
 
                 // Info da transação
@@ -378,6 +382,18 @@ public class ReceiptPrinter
             _serial.WriteText($"{config.FooterLine2}\n");
             _serial.Write(EscPosCommands.BoldOff);
         }
+    }
+
+    private void PrintCustomerNumberBlock(Transaction transaction, PrintLayoutConfig config)
+    {
+        if (!config.ShowCustomerNumber || transaction.CustomerNumber == null) return;
+        _serial.Write(EscPosCommands.AlignCenter);
+        _serial.Write(EscPosCommands.BoldOn);
+        _serial.WriteText("No CLIENTE\n");
+        _serial.Write(EscPosCommands.SizeDouble);
+        _serial.WriteText($"{transaction.CustomerNumber}\n");
+        _serial.Write(EscPosCommands.SizeNormal);
+        _serial.Write(EscPosCommands.BoldOff);
     }
 
     public bool PrintCashSessionReport(CashSession session, IEnumerable<Transaction> transactions, PrintLayoutConfig config)
