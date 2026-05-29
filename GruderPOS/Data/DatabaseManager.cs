@@ -76,6 +76,7 @@ public class DatabaseManager
                 PaymentMethod TEXT NOT NULL DEFAULT 'Cash',
                 CreatedAt TEXT NOT NULL DEFAULT (datetime('now','localtime')),
                 Voided INTEGER NOT NULL DEFAULT 0,
+                CustomerNumber INTEGER NULL,
                 FOREIGN KEY (CashSessionId) REFERENCES CashSessions(Id)
             );
         ");
@@ -132,6 +133,8 @@ public class DatabaseManager
                 INSERT INTO AppSettings (Key, Value) VALUES ('ShowGridHeader', 'true');
                 INSERT INTO AppSettings (Key, Value) VALUES ('ShowPaymentMethod', 'true');
                 INSERT INTO AppSettings (Key, Value) VALUES ('ShowTotals', 'true');
+                INSERT INTO AppSettings (Key, Value) VALUES ('CustomerNumberEnabled', 'false');
+                INSERT INTO AppSettings (Key, Value) VALUES ('ShowCustomerNumber', 'true');
             ");
         }
         else
@@ -160,7 +163,9 @@ public class DatabaseManager
                 ["ShowTicketNumber"] = "true",
                 ["ShowGridHeader"] = "true",
                 ["ShowPaymentMethod"] = "true",
-                ["ShowTotals"] = "true"
+                ["ShowTotals"] = "true",
+                ["CustomerNumberEnabled"] = "false",
+                ["ShowCustomerNumber"] = "true",
             };
             foreach (var kvp in defaults)
             {
@@ -169,6 +174,15 @@ public class DatabaseManager
                     connection.Execute("INSERT INTO AppSettings (Key, Value) VALUES (@Key, @Value)",
                         new { Key = kvp.Key, Value = kvp.Value });
                 }
+            }
+
+            // Migrate Transactions table: add CustomerNumber column if missing
+            var transactionColumns = connection.Query<string>(
+                "SELECT name FROM pragma_table_info('Transactions')").ToHashSet();
+            if (!transactionColumns.Contains("CustomerNumber"))
+            {
+                connection.Execute(
+                    "ALTER TABLE Transactions ADD COLUMN CustomerNumber INTEGER NULL;");
             }
         }
 

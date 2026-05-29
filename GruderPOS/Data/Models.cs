@@ -59,6 +59,7 @@ public class Transaction
     public string PaymentMethod { get; set; } = "Cash";
     public string CreatedAt { get; set; } = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
     public bool Voided { get; set; }
+    public int? CustomerNumber { get; set; }
     public List<TransactionItem>? Items { get; set; }
 }
 
