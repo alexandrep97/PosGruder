@@ -830,6 +830,16 @@ const settings = {
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-top:1px solid var(--bg-dark);">
+                    <div>
+                        <span style="font-size:13px; font-weight:600;">Número de Cliente</span>
+                        <div style="font-size:11px; color:var(--text-muted);">Pede um número de senha ao processar o pagamento (serviço à mesa)</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="setting-customer-number" ${appSettings.CustomerNumberEnabled === 'true' ? 'checked' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
                 <div style="margin-top: 20px;">
                     <button class="btn btn-primary" onclick="settings.saveGeneralSettings(this)">Guardar</button>
                 </div>
@@ -844,14 +854,20 @@ const settings = {
     async saveGeneralSettings(btn) {
         const eventName = document.getElementById('setting-event').value.trim();
         const showChange = document.getElementById('setting-show-change').checked;
+        const customerNumber = document.getElementById('setting-customer-number').checked;
 
         setButtonLoading(btn, true);
         try {
             await bridge.send('saveSettings', {
-                data: { EventName: eventName, ShowChangeCalculator: String(showChange) }
+                data: {
+                    EventName: eventName,
+                    ShowChangeCalculator: String(showChange),
+                    CustomerNumberEnabled: String(customerNumber)
+                }
             });
             app.settings.EventName = eventName;
             app.settings.ShowChangeCalculator = String(showChange);
+            app.settings.CustomerNumberEnabled = String(customerNumber);
             showToast('Definições guardadas!', 'success');
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
