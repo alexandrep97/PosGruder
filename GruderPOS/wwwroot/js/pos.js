@@ -328,21 +328,33 @@ const pos = {
             return;
         }
 
-        if (this.paymentMethod === 'Cash' && app.settings.ShowChangeCalculator === 'true') {
-            const total = this.getTotal();
-            this._pendingPayment = {
-                cashSessionId: app.currentSession.id,
-                totalAmount: total,
-                paymentMethod: this.paymentMethod,
-                items: this.cart.map(item => ({
-                    productId: item.productId,
-                    productName: item.productName,
-                    quantity: item.quantity,
-                    unitPrice: item.unitPrice,
-                    totalPrice: item.totalPrice,
-                    isGenericItem: item.isGenericItem
-                }))
-            };
+        const total = this.getTotal();
+        this._pendingPayment = {
+            cashSessionId: app.currentSession.id,
+            totalAmount: total,
+            paymentMethod: this.paymentMethod,
+            customerNumber: null,
+            items: this.cart.map(item => ({
+                productId: item.productId,
+                productName: item.productName,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+                totalPrice: item.totalPrice,
+                isGenericItem: item.isGenericItem
+            }))
+        };
+
+        if (app.settings.CustomerNumberEnabled === 'true') {
+            this.openCustomerNumberModal();
+            return;
+        }
+
+        await this._executePayment();
+    },
+
+    async _executePayment() {
+        if (!this._pendingPayment) return;
+        if (this._pendingPayment.paymentMethod === 'Cash' && app.settings.ShowChangeCalculator === 'true') {
             this.openChangeModal();
             return;
         }
@@ -350,33 +362,64 @@ const pos = {
         const btn = document.getElementById('btn-pay');
         setButtonLoading(btn, true);
         try {
-            const total = this.getTotal();
-            const data = {
-                cashSessionId: app.currentSession.id,
-                totalAmount: total,
-                paymentMethod: this.paymentMethod,
-                items: this.cart.map(item => ({
-                    productId: item.productId,
-                    productName: item.productName,
-                    quantity: item.quantity,
-                    unitPrice: item.unitPrice,
-                    totalPrice: item.totalPrice,
-                    isGenericItem: item.isGenericItem
-                }))
-            };
-
-            await bridge.send('processTransaction', { data });
-            showPaymentSuccess(total);
-            app.currentSession.totalSales = (app.currentSession.totalSales || 0) + total;
+            await bridge.send('processTransaction', { data: this._pendingPayment });
+            showPaymentSuccess(this._pendingPayment.totalAmount);
+            app.currentSession.totalSales = (app.currentSession.totalSales || 0) + this._pendingPayment.totalAmount;
             app.currentSession.totalTransactions = (app.currentSession.totalTransactions || 0) + 1;
             app.updateSessionUI();
-            setButtonLoading(btn, false);
+            this._pendingPayment = null;
             this.cart = [];
             this.setPaymentMethod('Cash');
             this.renderCart();
             this.renderProducts();
         } catch (e) {
             showToast('Erro ao processar pagamento: ' + e.message, 'error');
+        } finally {
+            setButtonLoading(btn, false);
+        }
+    },
+
+    openCustomerNumberModal() {
+        if (!this._pendingPayment) return;
+        const methodLabel = { Cash: 'Dinheiro', Card: 'Cartão', MBWay: 'MB Way' }[this._pendingPayment.paymentMethod] || this._pendingPayment.paymentMethod;
+        document.getElementById('customer-number-info').textContent =
+            `${methodLabel} — ${formatCurrency(this._pendingPayment.totalAmount)}`;
+        document.getElementById('customer-number-display').textContent = '—';
+        document.getElementById('modal-customer-number').classList.add('active');
+    },
+
+    cancelCustomerNumberModal() {
+        document.getElementById('modal-customer-number').classList.remove('active');
+        this._pendingPayment = null;
+    },
+
+    customerNumpadInput(key) {
+        const display = document.getElementById('customer-number-display');
+        const current = display.textContent === '—' ? '' : display.textContent;
+        if (key === 'del') {
+            const newVal = current.slice(0, -1);
+            display.textContent = newVal || '—';
+        } else {
+            if (current.length >= 4) return;
+            display.textContent = current + key;
+        }
+    },
+
+    clearCustomerNumber() {
+        document.getElementById('customer-number-display').textContent = '—';
+    },
+
+    async confirmCustomerNumber() {
+        if (!this._pendingPayment) return;
+        const btn = document.getElementById('modal-customer-number').querySelector('.btn-success');
+        setButtonLoading(btn, true);
+        try {
+            const val = document.getElementById('customer-number-display').textContent;
+            if (val && val !== '—') {
+                this._pendingPayment.customerNumber = parseInt(val, 10);
+            }
+            document.getElementById('modal-customer-number').classList.remove('active');
+            await this._executePayment();
         } finally {
             setButtonLoading(btn, false);
         }
