@@ -47,6 +47,9 @@ Name: "{commondesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: desk
 Filename: "{app}\{#AppExeName}"; Description: "Iniciar {#AppName}"; Flags: nowait postinstall skipifsilent
 
 [Code]
+const
+  WebView2Guid = '{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}';
+
 function IsDotNet8DesktopRuntimeInstalled(): Boolean;
 var
   FindRec: TFindRec;
@@ -61,8 +64,6 @@ end;
 
 // WebView2 Runtime: verifica instalacao global ou por utilizador
 function IsWebView2RuntimeInstalled(): Boolean;
-const
-  WebView2Guid = '{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}';
 var
   Version: String;
 begin

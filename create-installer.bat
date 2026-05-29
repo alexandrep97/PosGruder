@@ -19,7 +19,7 @@ set "ISCC=C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 :: Verificar InnoSetup
 if not exist "%ISCC%" (
     echo [ERRO] Inno Setup 6 nao encontrado em:
-    echo        %ISCC%
+    echo        !ISCC!
     echo.
     echo Instala Inno Setup 6: https://jrsoftware.org/isinfo.php
     pause
