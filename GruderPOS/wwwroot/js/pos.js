@@ -416,7 +416,8 @@ const pos = {
         try {
             const val = document.getElementById('customer-number-display').textContent;
             if (val && val !== '—') {
-                this._pendingPayment.customerNumber = parseInt(val, 10);
+                const parsed = parseInt(val, 10);
+                if (!isNaN(parsed)) this._pendingPayment.customerNumber = parsed;
             }
             document.getElementById('modal-customer-number').classList.remove('active');
             await this._executePayment();

@@ -394,6 +394,7 @@ public class ReceiptPrinter
         _serial.WriteText($"{transaction.CustomerNumber}\n");
         _serial.Write(EscPosCommands.SizeNormal);
         _serial.Write(EscPosCommands.BoldOff);
+        _serial.Write(EscPosCommands.AlignLeft);
     }
 
     public bool PrintCashSessionReport(CashSession session, IEnumerable<Transaction> transactions, PrintLayoutConfig config)
