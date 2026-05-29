@@ -274,6 +274,38 @@
         </div>
     </div>
 
+    <!-- Modal: Customer Number -->
+    <div id="modal-customer-number" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Número de Cliente</h3>
+            </div>
+            <div class="modal-body" style="text-align:center;">
+                <p id="customer-number-info" style="font-size:13px; color:var(--text-muted); margin-bottom:16px;"></p>
+                <p style="font-size:13px; color:var(--text-muted); margin-bottom:6px;">Senha do cliente <span style="font-size:11px;">(opcional)</span></p>
+                <div id="customer-number-display" style="font-size:36px; font-weight:800; margin-bottom:16px; min-height:48px; letter-spacing:4px;">—</div>
+                <div class="numpad">
+                    <button class="numpad-btn" onclick="pos.customerNumpadInput('1')">1</button>
+                    <button class="numpad-btn" onclick="pos.customerNumpadInput('2')">2</button>
+                    <button class="numpad-btn" onclick="pos.customerNumpadInput('3')">3</button>
+                    <button class="numpad-btn" onclick="pos.customerNumpadInput('4')">4</button>
+                    <button class="numpad-btn" onclick="pos.customerNumpadInput('5')">5</button>
+                    <button class="numpad-btn" onclick="pos.customerNumpadInput('6')">6</button>
+                    <button class="numpad-btn" onclick="pos.customerNumpadInput('7')">7</button>
+                    <button class="numpad-btn" onclick="pos.customerNumpadInput('8')">8</button>
+                    <button class="numpad-btn" onclick="pos.customerNumpadInput('9')">9</button>
+                    <button class="numpad-btn" onclick="pos.clearCustomerNumber()">C</button>
+                    <button class="numpad-btn" onclick="pos.customerNumpadInput('0')">0</button>
+                    <button class="numpad-btn numpad-delete" onclick="pos.customerNumpadInput('del')">&#x232B;</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="pos.cancelCustomerNumberModal()">Cancelar</button>
+                <button class="btn btn-success" onclick="pos.confirmCustomerNumber()">Pagar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Change Calculator -->
     <div id="modal-change" class="modal">
         <div class="modal-content">
