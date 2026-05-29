@@ -105,6 +105,7 @@ const history = {
                         <span>${formatDateTime(t.createdAt)}</span>
                         <span>${paymentLabel}</span>
                         <span>Sessão #${t.cashSessionId}</span>
+                        ${t.customerNumber != null ? `<span>Cliente #${t.customerNumber}</span>` : ''}
                         ${t.voided ? '<span class="text-danger">ANULADA</span>' : ''}
                     </div>
                     <div class="transaction-details" id="details-${t.id}">`;
