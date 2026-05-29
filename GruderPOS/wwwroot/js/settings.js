@@ -366,6 +366,7 @@ const settings = {
         const showDate = s.ShowDate !== 'false';
         const showSession = s.ShowSession !== 'false';
         const showReceipt = s.ShowReceiptNumber !== 'false';
+        const showCustomerNumber = s.ShowCustomerNumber !== 'false';
         const showTicket = s.ShowTicketNumber !== 'false';
         const showGrid = s.ShowGridHeader !== 'false';
         const showPayment = s.ShowPaymentMethod !== 'false';
@@ -453,6 +454,7 @@ const settings = {
                 ${makeSwitch('receipt-show-date', 'Data e Hora', showDate, '')}
                 ${makeSwitch('receipt-show-session', 'Nº Sessão', showSession, '')}
                 ${makeSwitch('receipt-show-receipt', 'Nº Talão', showReceipt, '')}
+                ${makeSwitch('receipt-show-customer-number', 'Nº Cliente', showCustomerNumber, 'Imprime o nº do cliente em destaque no talão')}
                 ${makeSwitch('receipt-show-ticket', 'Nº Senha', showTicket, 'Apenas em senhas individuais')}
                 ${makeSwitch('receipt-show-grid', 'Cabeçalho da Grelha', showGrid, 'Apenas em talão completo (Artigo / Qtd / Total)')}
                 ${makeSwitch('receipt-show-payment', 'Modo de Pagamento', showPayment, '')}
@@ -536,6 +538,7 @@ const settings = {
         const showDate = document.getElementById('receipt-show-date')?.checked ?? true;
         const showSession = document.getElementById('receipt-show-session')?.checked ?? true;
         const showReceipt = document.getElementById('receipt-show-receipt')?.checked ?? true;
+        const showCustomerNumber = document.getElementById('receipt-show-customer-number')?.checked ?? true;
         const showTicket = document.getElementById('receipt-show-ticket')?.checked ?? true;
         const showGrid = document.getElementById('receipt-show-grid')?.checked ?? true;
         const showPayment = document.getElementById('receipt-show-payment')?.checked ?? true;
@@ -569,6 +572,10 @@ const settings = {
                 if (b1) lines.push(b1);
                 if (b2) lines.push(b2);
             }
+            if (showCustomerNumber) {
+                lines.push('<b>          No CLIENTE</b>');
+                lines.push('<b class="big">              42</b>');
+            }
             lines.push('------------------------------------------');
             if (showDate) lines.push('Data: 10/04/2026 17:30');
             if (showReceipt) lines.push('Talao No: 42');
@@ -598,6 +605,10 @@ const settings = {
                     lines.push(`<b>${bodyTitle}</b>`);
                     if (b1) lines.push(b1);
                     if (b2) lines.push(b2);
+                }
+                if (showCustomerNumber) {
+                    lines.push('<b>          No CLIENTE</b>');
+                    lines.push('<b class="big">              42</b>');
                 }
                 lines.push('------------------------------------------');
                 if (showDate) lines.push('Data: 10/04/2026 17:30');
@@ -635,6 +646,7 @@ const settings = {
             ShowDate: String(document.getElementById('receipt-show-date').checked),
             ShowSession: String(document.getElementById('receipt-show-session').checked),
             ShowReceiptNumber: String(document.getElementById('receipt-show-receipt').checked),
+            ShowCustomerNumber: String(document.getElementById('receipt-show-customer-number').checked),
             ShowTicketNumber: String(document.getElementById('receipt-show-ticket').checked),
             ShowGridHeader: String(document.getElementById('receipt-show-grid').checked),
             ShowPaymentMethod: String(document.getElementById('receipt-show-payment').checked),
