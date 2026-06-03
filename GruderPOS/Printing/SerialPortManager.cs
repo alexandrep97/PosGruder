@@ -2,7 +2,7 @@ using System.IO.Ports;
 
 namespace GruderPOS.Printing;
 
-public class SerialPortManager : IDisposable
+public class SerialPortManager : IPrinterTransport, IDisposable
 {
     private SerialPort? _port;
     private string _portName = "COM3";
