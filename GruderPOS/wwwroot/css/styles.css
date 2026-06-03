@@ -1727,3 +1727,48 @@ button, a, input, select, label, .product-card, .print-mode-card, .payment-btn, 
     animation: spin 0.65s linear infinite;
     vertical-align: middle;
 }
+
+/* Session Dropdown */
+.sidebar-footer {
+    position: relative;
+}
+.session-dropdown {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px;
+    z-index: 200;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.3);
+}
+.session-dropdown.hidden { display: none; }
+.session-dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 9px 12px;
+    background: none;
+    border: none;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 13px;
+}
+.session-dropdown-item:hover { background: var(--hover); }
+.session-dropdown-divider { height: 1px; background: var(--border); margin: 4px 2px; }
+.session-dropdown-danger { color: var(--danger); }
+
+/* Close dialog — movement stat cards */
+.session-stat-deposits {
+    border-top: 2px solid #2196f3 !important;
+}
+.session-stat-withdrawals {
+    border-top: 2px solid #ff9800 !important;
+}
+.session-stat-total-row {
+    grid-column: 1 / -1;
+    border-top: 2px solid var(--success) !important;
+}
