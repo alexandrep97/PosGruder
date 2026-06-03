@@ -829,7 +829,7 @@ const settings = {
         try {
             const data = await bridge.send('getSerialPorts');
             const select = document.getElementById('printer-port');
-            if (!select) return;
+            if (!select) { setButtonLoading(btn, false); return; }
             const current = select.value;
             select.innerHTML = (data.ports?.length
                 ? data.ports.map(p => `<option value="${p}" ${p === (current || data.currentPort) ? 'selected' : ''}>${p}</option>`)
@@ -860,10 +860,11 @@ const settings = {
         const select = document.getElementById('printer-usb-name');
         if (!select) return;
         try {
+            const esc = s => s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             const data = await bridge.send('getWindowsPrinters');
             select.innerHTML = (data.printers?.length
                 ? data.printers.map(p =>
-                    `<option value="${p}" ${p === currentPrinter ? 'selected' : ''}>${p}</option>`)
+                    `<option value="${esc(p)}" ${p === currentPrinter ? 'selected' : ''}>${esc(p)}</option>`)
                 : [`<option value="">Nenhuma impressora encontrada</option>`]
             ).join('');
         } catch (e) {
@@ -874,13 +875,14 @@ const settings = {
     async refreshWindowsPrinters(btn) {
         setButtonLoading(btn, true);
         try {
+            const esc = s => s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             const data = await bridge.send('getWindowsPrinters');
             const select = document.getElementById('printer-usb-name');
-            if (!select) return;
+            if (!select) { setButtonLoading(btn, false); return; }
             const current = select.value;
             select.innerHTML = (data.printers?.length
                 ? data.printers.map(p =>
-                    `<option value="${p}" ${p === current ? 'selected' : ''}>${p}</option>`)
+                    `<option value="${esc(p)}" ${p === current ? 'selected' : ''}>${esc(p)}</option>`)
                 : [`<option value="">Nenhuma impressora encontrada</option>`]
             ).join('');
             showToast('Impressoras atualizadas', 'info');
