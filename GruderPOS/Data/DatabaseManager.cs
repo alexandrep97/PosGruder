@@ -108,11 +108,16 @@ public class DatabaseManager
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
                 CashSessionId INTEGER NOT NULL,
                 Type TEXT NOT NULL,
-                Amount REAL NOT NULL,
+                Amount REAL NOT NULL CHECK (Amount > 0),
                 Notes TEXT,
                 CreatedAt TEXT NOT NULL DEFAULT (datetime('now','localtime')),
                 FOREIGN KEY (CashSessionId) REFERENCES CashSessions(Id)
             );
+        ");
+
+        connection.Execute(@"
+            CREATE INDEX IF NOT EXISTS idx_CashMovements_SessionId
+            ON CashMovements(CashSessionId);
         ");
 
         // Seed default settings

@@ -57,7 +57,13 @@ public class CashMovement
     public string Type { get; set; } = string.Empty;   // "Deposit" | "Withdrawal"
     public double Amount { get; set; }
     public string? Notes { get; set; }
-    public string CreatedAt { get; set; } = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+    public string CreatedAt { get; set; } = string.Empty;
+}
+
+public static class MovementType
+{
+    public const string Deposit = "Deposit";
+    public const string Withdrawal = "Withdrawal";
 }
 
 public class Transaction
