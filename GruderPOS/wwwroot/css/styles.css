@@ -990,6 +990,16 @@ body {
     box-shadow: var(--shadow);
 }
 
+/* ===== Printer Type Tabs ===== */
+.printer-type-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-dark);
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+}
+
 /* ===== Settings Content ===== */
 .settings-content, .history-content {
     flex: 1;
