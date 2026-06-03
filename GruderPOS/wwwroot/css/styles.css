@@ -1769,6 +1769,5 @@ button, a, input, select, label, .product-card, .print-mode-card, .payment-btn, 
     border-top: 2px solid #ff9800 !important;
 }
 .session-stat-total-row {
-    grid-column: 1 / -1;
     border-top: 2px solid var(--success) !important;
 }

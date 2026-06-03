@@ -250,7 +250,7 @@ const history = {
                         <span style="${color}">${sign} ${typeLabel}</span>
                         <span style="display:flex;flex-direction:column;align-items:flex-end">
                             <span style="${color}">${isDeposit ? '+' : '-'}${formatCurrency(m.amount)}</span>
-                            ${m.notes ? `<span style="font-size:11px;color:var(--text-muted)">${m.notes}</span>` : ''}
+                            ${m.notes ? `<span style="font-size:11px;color:var(--text-muted)">${escHtml(m.notes)}</span>` : ''}
                         </span>
                     </div>`;
                 });

@@ -31,7 +31,7 @@
                 <button class="session-dropdown-item" onclick="app.showCashMovementModal('Deposit')">💰 Depósito</button>
                 <button class="session-dropdown-item" onclick="app.showCashMovementModal('Withdrawal')">💸 Levantamento</button>
                 <div class="session-dropdown-divider"></div>
-                <button class="session-dropdown-item session-dropdown-danger" onclick="app.hideSessionDropdown(); app.showCloseSessionModal()">🔒 Fechar Caixa</button>
+                <button class="session-dropdown-item session-dropdown-danger" onclick="app.hideSessionDropdown(); app.showCloseSessionModal().catch(e => showToast('Erro: ' + e.message, 'error'))">🔒 Fechar Caixa</button>
             </div>
             <div id="session-indicator" class="session-closed">
                 <span class="session-dot"></span>
