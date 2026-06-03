@@ -40,31 +40,29 @@ public class WindowsPrinterTransport : IPrinterTransport
         {
             var di = new DOCINFO { cbSize = Marshal.SizeOf<DOCINFO>(), pDocName = "ESC/POS", pDataType = "RAW" };
             if (StartDocPrinter(hPrinter, 1, ref di) == 0) return false;
-            if (!StartPagePrinter(hPrinter))
-            {
-                EndDocPrinter(hPrinter);
-                return false;
-            }
-
-            var ptr = Marshal.AllocHGlobal(data.Length);
             try
             {
-                Marshal.Copy(data, 0, ptr, data.Length);
-                if (!WritePrinter(hPrinter, ptr, data.Length, out var written) || written != data.Length)
+                if (!StartPagePrinter(hPrinter)) return false;
+
+                var ptr = Marshal.AllocHGlobal(data.Length);
+                try
                 {
-                    EndPagePrinter(hPrinter);
-                    EndDocPrinter(hPrinter);
-                    return false;
+                    Marshal.Copy(data, 0, ptr, data.Length);
+                    if (!WritePrinter(hPrinter, ptr, data.Length, out var written) || written != data.Length)
+                        return false;
                 }
+                finally
+                {
+                    Marshal.FreeHGlobal(ptr);
+                }
+
+                EndPagePrinter(hPrinter);
+                return true;
             }
             finally
             {
-                Marshal.FreeHGlobal(ptr);
+                EndDocPrinter(hPrinter);
             }
-
-            EndPagePrinter(hPrinter);
-            EndDocPrinter(hPrinter);
-            return true;
         }
         catch (Exception ex)
         {

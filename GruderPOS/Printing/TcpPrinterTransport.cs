@@ -31,8 +31,9 @@ public class TcpPrinterTransport : IPrinterTransport
             using var client = new TcpClient();
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
             client.ConnectAsync(_ipAddress, _port).Wait(cts.Token);
-            client.SendTimeout = 3000;
+            client.ReceiveTimeout = 3000;
             using var stream = client.GetStream();
+            stream.WriteTimeout = 3000;
             stream.Write(data, 0, data.Length);
             return true;
         }

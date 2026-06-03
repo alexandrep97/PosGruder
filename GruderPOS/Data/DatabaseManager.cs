@@ -152,6 +152,10 @@ public class DatabaseManager
                 INSERT INTO AppSettings (Key, Value) VALUES ('ShowTotals', 'true');
                 INSERT INTO AppSettings (Key, Value) VALUES ('CustomerNumberEnabled', 'false');
                 INSERT INTO AppSettings (Key, Value) VALUES ('ShowCustomerNumber', 'true');
+                INSERT INTO AppSettings (Key, Value) VALUES ('PrinterType', 'COM');
+                INSERT INTO AppSettings (Key, Value) VALUES ('UsbPrinterName', '');
+                INSERT INTO AppSettings (Key, Value) VALUES ('LanIpAddress', '');
+                INSERT INTO AppSettings (Key, Value) VALUES ('LanPort', '9100');
             ");
         }
         else
@@ -183,6 +187,10 @@ public class DatabaseManager
                 ["ShowTotals"] = "true",
                 ["CustomerNumberEnabled"] = "false",
                 ["ShowCustomerNumber"] = "true",
+                ["PrinterType"] = "COM",
+                ["UsbPrinterName"] = "",
+                ["LanIpAddress"] = "",
+                ["LanPort"] = "9100",
             };
             foreach (var kvp in defaults)
             {

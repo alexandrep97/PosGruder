@@ -852,7 +852,7 @@ const settings = {
         });
         if (type === 'USB') {
             const current = document.getElementById('printer-usb-name')?.value || '';
-            this._loadWindowsPrinters(current);
+            this._loadWindowsPrinters(current).catch(() => {});
         }
     },
 
