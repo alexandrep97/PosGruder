@@ -11,7 +11,7 @@ public class MainForm : Form
     private WebView2 _webView = null!;
     private WebBridge _bridge = null!;
     private DatabaseManager _dbManager = null!;
-    private SerialPortManager _serialPort = null!;
+    private IPrinterTransport _transport = null!;
 
     // Title bar controls
     private Panel _titleBar = null!;
@@ -171,15 +171,40 @@ public class MainForm : Form
         _dbManager = new DatabaseManager();
         _dbManager.Initialize();
 
-        _serialPort = new SerialPortManager();
+        _transport = BuildTransport();
 
-        // Load serial port settings
-        var settingsRepo = new Data.SettingsRepository(_dbManager);
-        var port = settingsRepo.GetAsync("SerialPort").GetAwaiter().GetResult() ?? "COM3";
-        var baudRate = int.Parse(settingsRepo.GetAsync("BaudRate").GetAwaiter().GetResult() ?? "9600");
-        _serialPort.Configure(port, baudRate);
+        _bridge = new WebBridge(_dbManager, _transport, RebuildPrinterTransport);
+    }
 
-        _bridge = new WebBridge(_dbManager, _serialPort, () => { });
+    private IPrinterTransport BuildTransport()
+    {
+        var repo = new Data.SettingsRepository(_dbManager);
+        var type = repo.GetAsync("PrinterType").GetAwaiter().GetResult() ?? "COM";
+
+        return type switch
+        {
+            "USB" => new WindowsPrinterTransport(
+                repo.GetAsync("UsbPrinterName").GetAwaiter().GetResult() ?? ""),
+            "LAN" => new TcpPrinterTransport(
+                repo.GetAsync("LanIpAddress").GetAwaiter().GetResult() ?? "127.0.0.1",
+                int.Parse(repo.GetAsync("LanPort").GetAwaiter().GetResult() ?? "9100")),
+            _ => BuildSerialTransport(repo)
+        };
+    }
+
+    private SerialPortManager BuildSerialTransport(Data.SettingsRepository repo)
+    {
+        var port = repo.GetAsync("SerialPort").GetAwaiter().GetResult() ?? "COM3";
+        var baudRate = int.Parse(repo.GetAsync("BaudRate").GetAwaiter().GetResult() ?? "9600");
+        var mgr = new SerialPortManager();
+        mgr.Configure(port, baudRate);
+        return mgr;
+    }
+
+    private void RebuildPrinterTransport()
+    {
+        _transport = BuildTransport();
+        _bridge.SetTransport(_transport);
     }
 
     private async void InitializeWebView()
@@ -219,7 +244,8 @@ public class MainForm : Form
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
-        _serialPort?.Dispose();
+        if (_transport is IDisposable disposable) disposable.Dispose();
+        else _transport?.Disconnect();
         base.OnFormClosing(e);
     }
 
