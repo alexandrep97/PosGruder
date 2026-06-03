@@ -179,7 +179,7 @@ public class MainForm : Form
         var baudRate = int.Parse(settingsRepo.GetAsync("BaudRate").GetAwaiter().GetResult() ?? "9600");
         _serialPort.Configure(port, baudRate);
 
-        _bridge = new WebBridge(_dbManager, _serialPort);
+        _bridge = new WebBridge(_dbManager, _serialPort, () => { });
     }
 
     private async void InitializeWebView()

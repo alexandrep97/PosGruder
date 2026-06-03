@@ -13,8 +13,9 @@ public class WebBridge
     private readonly CashSessionRepository _cashSessions;
     private readonly CashMovementRepository _cashMovements;
     private readonly SettingsRepository _settings;
-    private readonly ReceiptPrinter _printer;
-    private readonly SerialPortManager _serialPort;
+    private ReceiptPrinter _printer;
+    private IPrinterTransport _transport;
+    private readonly Action _onSettingsSaved;
 
     private static readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -23,7 +24,7 @@ public class WebBridge
         PropertyNameCaseInsensitive = true
     };
 
-    public WebBridge(DatabaseManager db, SerialPortManager serialPort)
+    public WebBridge(DatabaseManager db, IPrinterTransport transport, Action onSettingsSaved)
     {
         _categories = new CategoryRepository(db);
         _products = new ProductRepository(db);
@@ -31,8 +32,15 @@ public class WebBridge
         _cashSessions = new CashSessionRepository(db);
         _cashMovements = new CashMovementRepository(db);
         _settings = new SettingsRepository(db);
-        _serialPort = serialPort;
-        _printer = new ReceiptPrinter(serialPort);
+        _transport = transport;
+        _printer = new ReceiptPrinter(transport);
+        _onSettingsSaved = onSettingsSaved;
+    }
+
+    public void SetTransport(IPrinterTransport transport)
+    {
+        _transport = transport;
+        _printer.SetTransport(transport);
     }
 
     public async Task<string> HandleMessage(string messageJson)
@@ -70,7 +78,8 @@ public class WebBridge
                 "getCashMovements"   => await HandleGetCashMovements(root),
                 "getAllCashMovements" => await HandleGetAllCashMovements(),
                 "testPrint" => HandleTestPrint(),
-                "getSerialPorts" => HandleGetSerialPorts(),
+                "getWindowsPrinters" => await HandleGetWindowsPrinters(),
+                "getSerialPorts" => await HandleGetSerialPorts(),
                 "getSettings" => await HandleGetSettings(),
                 "saveSettings" => await HandleSaveSettings(root),
                 _ => throw new Exception($"Unknown action: {action}")
@@ -400,10 +409,21 @@ public class WebBridge
         return new { success, message = success ? "Teste impresso com sucesso!" : "Erro ao imprimir. Verifique a ligação." };
     }
 
-    private object HandleGetSerialPorts()
+    private async Task<object> HandleGetWindowsPrinters()
+    {
+        var printers = System.Drawing.Printing.PrinterSettings.InstalledPrinters
+            .Cast<string>()
+            .ToList();
+        var currentPrinter = await _settings.GetAsync("UsbPrinterName") ?? "";
+        return new { printers, currentPrinter };
+    }
+
+    private async Task<object> HandleGetSerialPorts()
     {
         var ports = SerialPortManager.GetAvailablePorts();
-        return new { ports, currentPort = _serialPort.PortName, baudRate = _serialPort.BaudRate };
+        var currentPort = await _settings.GetAsync("SerialPort") ?? "COM3";
+        var baudRate = int.Parse(await _settings.GetAsync("BaudRate") ?? "9600");
+        return new { ports, currentPort, baudRate };
     }
 
     // Settings
@@ -421,13 +441,7 @@ public class WebBridge
         }
 
         await _settings.SetMultipleAsync(settings);
-
-        // Apply serial port settings if changed
-        if (settings.TryGetValue("SerialPort", out var port))
-        {
-            var baudRate = settings.TryGetValue("BaudRate", out var br) ? int.Parse(br) : 9600;
-            _serialPort.Configure(port, baudRate);
-        }
+        _onSettingsSaved.Invoke(); // MainForm rebuilds and swaps the transport
 
         return new { saved = true };
     }
