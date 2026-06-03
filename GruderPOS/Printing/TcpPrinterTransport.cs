@@ -1,4 +1,5 @@
 using System.Net.Sockets;
+using System.Threading;
 
 namespace GruderPOS.Printing;
 
@@ -28,7 +29,9 @@ public class TcpPrinterTransport : IPrinterTransport
         try
         {
             using var client = new TcpClient();
-            client.Connect(_ipAddress, _port);
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            client.ConnectAsync(_ipAddress, _port).Wait(cts.Token);
+            client.SendTimeout = 3000;
             using var stream = client.GetStream();
             stream.Write(data, 0, data.Length);
             return true;
