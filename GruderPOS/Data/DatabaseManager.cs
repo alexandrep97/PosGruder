@@ -103,6 +103,18 @@ public class DatabaseManager
             );
         ");
 
+        connection.Execute(@"
+            CREATE TABLE IF NOT EXISTS CashMovements (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                CashSessionId INTEGER NOT NULL,
+                Type TEXT NOT NULL,
+                Amount REAL NOT NULL,
+                Notes TEXT,
+                CreatedAt TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+                FOREIGN KEY (CashSessionId) REFERENCES CashSessions(Id)
+            );
+        ");
+
         // Seed default settings
         var settingsCount = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM AppSettings;");
         if (settingsCount == 0)

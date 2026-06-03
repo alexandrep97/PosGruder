@@ -50,6 +50,16 @@ public class CashSessionDetail
     public List<PaymentBreakdown> PaymentBreakdown { get; set; } = new();
 }
 
+public class CashMovement
+{
+    public int Id { get; set; }
+    public int CashSessionId { get; set; }
+    public string Type { get; set; } = string.Empty;   // "Deposit" | "Withdrawal"
+    public double Amount { get; set; }
+    public string? Notes { get; set; }
+    public string CreatedAt { get; set; } = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+}
+
 public class Transaction
 {
     public int Id { get; set; }
