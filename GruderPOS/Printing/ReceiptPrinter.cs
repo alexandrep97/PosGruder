@@ -397,7 +397,7 @@ public class ReceiptPrinter
         _serial.Write(EscPosCommands.AlignLeft);
     }
 
-    public bool PrintCashSessionReport(CashSession session, IEnumerable<Transaction> transactions, PrintLayoutConfig config)
+    public bool PrintCashSessionReport(CashSession session, IEnumerable<Transaction> transactions, PrintLayoutConfig config, double totalDeposits = 0, double totalWithdrawals = 0)
     {
         try
         {
@@ -449,7 +449,12 @@ public class ReceiptPrinter
             PrintLine('-');
             _serial.Write(EscPosCommands.BoldOn);
             _serial.WriteText(FormatTotalLine("TOTAL VENDAS:", $"{session.TotalSales:F2}"));
-            var closing = session.ClosingBalance ?? (session.OpeningBalance + session.TotalSales);
+            if (totalDeposits > 0)
+                _serial.WriteText(FormatTotalLine("+ Depositos:", $"+{totalDeposits:F2}"));
+            if (totalWithdrawals > 0)
+                _serial.WriteText(FormatTotalLine("- Levantamentos:", $"-{totalWithdrawals:F2}"));
+            PrintLine('-');
+            var closing = session.ClosingBalance ?? (session.OpeningBalance + session.TotalSales + totalDeposits - totalWithdrawals);
             _serial.Write(EscPosCommands.SizeDoubleHeight);
             _serial.WriteText(FormatTotalLine("TOTAL CAIXA:", $"{closing:F2} EUR"));
             _serial.Write(EscPosCommands.SizeNormal);
@@ -485,6 +490,64 @@ public class ReceiptPrinter
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Print session report error: {ex.Message}");
+            return false;
+        }
+    }
+
+    public bool PrintCashMovementReceipt(CashMovement movement, PrintLayoutConfig config)
+    {
+        try
+        {
+            if (!_serial.Connect()) return false;
+
+            InitPrinter();
+
+            _serial.Write(EscPosCommands.AlignCenter);
+            _serial.Write(EscPosCommands.BoldOn);
+            _serial.Write(EscPosCommands.SizeDouble);
+            if (config.HeaderEnabled && !string.IsNullOrWhiteSpace(config.HeaderLine1))
+                _serial.WriteText($"{config.HeaderLine1}\n");
+            else
+                _serial.WriteText("GRUDER\n");
+            _serial.Write(EscPosCommands.SizeNormal);
+            _serial.Write(EscPosCommands.BoldOff);
+            PrintLine('=');
+
+            _serial.Write(EscPosCommands.AlignCenter);
+            _serial.Write(EscPosCommands.BoldOn);
+            _serial.Write(EscPosCommands.SizeDouble);
+            var typeLabel = movement.Type == MovementType.Deposit ? "DEPOSITO" : "LEVANTAMENTO";
+            _serial.WriteText($"{typeLabel}\n");
+            _serial.Write(EscPosCommands.SizeNormal);
+            _serial.Write(EscPosCommands.BoldOff);
+            PrintLine('=');
+
+            _serial.Write(EscPosCommands.AlignLeft);
+            if (DateTime.TryParse(movement.CreatedAt, out var dt))
+                _serial.WriteText($"Data:  {dt:dd/MM/yyyy HH:mm}\n");
+            _serial.Write(EscPosCommands.BoldOn);
+            _serial.WriteText(FormatTotalLine("Valor:", $"{movement.Amount:F2} EUR"));
+            _serial.Write(EscPosCommands.BoldOff);
+
+            if (!string.IsNullOrWhiteSpace(movement.Notes))
+            {
+                PrintLine('-');
+                _serial.WriteText($"Notas: {movement.Notes}\n");
+            }
+
+            PrintLine('=');
+
+            if (config.FooterEnabled)
+                PrintFooter(config);
+
+            _serial.Write(EscPosCommands.FeedLines(4));
+            _serial.Write(EscPosCommands.PartialCut);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Print movement receipt error: {ex.Message}");
             return false;
         }
     }
