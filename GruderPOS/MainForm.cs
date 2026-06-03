@@ -187,7 +187,7 @@ public class MainForm : Form
                 repo.GetAsync("UsbPrinterName").GetAwaiter().GetResult() ?? ""),
             "LAN" => new TcpPrinterTransport(
                 repo.GetAsync("LanIpAddress").GetAwaiter().GetResult() ?? "127.0.0.1",
-                int.Parse(repo.GetAsync("LanPort").GetAwaiter().GetResult() ?? "9100")),
+                (int.TryParse(repo.GetAsync("LanPort").GetAwaiter().GetResult(), out var lp) ? lp : 9100)),
             _ => BuildSerialTransport(repo)
         };
     }
@@ -195,7 +195,7 @@ public class MainForm : Form
     private SerialPortManager BuildSerialTransport(Data.SettingsRepository repo)
     {
         var port = repo.GetAsync("SerialPort").GetAwaiter().GetResult() ?? "COM3";
-        var baudRate = int.Parse(repo.GetAsync("BaudRate").GetAwaiter().GetResult() ?? "9600");
+        var baudRate = int.TryParse(repo.GetAsync("BaudRate").GetAwaiter().GetResult(), out var br) ? br : 9600;
         var mgr = new SerialPortManager();
         mgr.Configure(port, baudRate);
         return mgr;
@@ -203,6 +203,7 @@ public class MainForm : Form
 
     private void RebuildPrinterTransport()
     {
+        if (_transport is IDisposable old) old.Dispose();
         _transport = BuildTransport();
         _bridge.SetTransport(_transport);
     }
