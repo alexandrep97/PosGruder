@@ -422,7 +422,8 @@ public class WebBridge
     {
         var ports = SerialPortManager.GetAvailablePorts();
         var currentPort = await _settings.GetAsync("SerialPort") ?? "COM3";
-        var baudRate = int.Parse(await _settings.GetAsync("BaudRate") ?? "9600");
+        var baudRateStr = await _settings.GetAsync("BaudRate") ?? "9600";
+        var baudRate = int.TryParse(baudRateStr, out var br) ? br : 9600;
         return new { ports, currentPort, baudRate };
     }
 
