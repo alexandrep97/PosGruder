@@ -193,6 +193,17 @@ const history = {
 
         this.sessions = rawSessions || [];
 
+        let allMovements = [];
+        try {
+            allMovements = await bridge.send('getAllCashMovements');
+        } catch (e) { /* continue without movements */ }
+
+        const movementsBySession = {};
+        (allMovements || []).forEach(m => {
+            if (!movementsBySession[m.cashSessionId]) movementsBySession[m.cashSessionId] = [];
+            movementsBySession[m.cashSessionId].push(m);
+        });
+
         if (this.sessions.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
@@ -225,6 +236,27 @@ const history = {
                 breakdownHtml += `</div>`;
             }
 
+            const sessionMovements = movementsBySession[s.id] || [];
+            let movementsHtml = '';
+            if (sessionMovements.length > 0) {
+                movementsHtml = `<div class="session-payment-breakdown">
+                    <div class="session-breakdown-label">Movimentos de Caixa</div>`;
+                sessionMovements.forEach(m => {
+                    const isDeposit = m.type === 'Deposit';
+                    const sign = isDeposit ? '▲' : '▼';
+                    const color = isDeposit ? 'color:#4caf50' : 'color:#ff9800';
+                    const typeLabel = isDeposit ? 'Depósito' : 'Levantamento';
+                    movementsHtml += `<div class="session-breakdown-row">
+                        <span style="${color}">${sign} ${typeLabel}</span>
+                        <span style="display:flex;flex-direction:column;align-items:flex-end">
+                            <span style="${color}">${isDeposit ? '+' : '-'}${formatCurrency(m.amount)}</span>
+                            ${m.notes ? `<span style="font-size:11px;color:var(--text-muted)">${m.notes}</span>` : ''}
+                        </span>
+                    </div>`;
+                });
+                movementsHtml += `</div>`;
+            }
+
             html += `
                 <div class="session-card">
                     <div class="session-card-header">
@@ -238,7 +270,7 @@ const history = {
                         <span class="session-stat-label">Fundo de Caixa</span>
                         <span class="session-stat-value">${formatCurrency(s.openingBalance || 0)}</span>
                     </div>
-                    ${breakdownHtml}
+                    ${breakdownHtml}${movementsHtml}
                     <div class="session-totals">
                         <div class="session-total-row">
                             <span>Total Vendas</span>
