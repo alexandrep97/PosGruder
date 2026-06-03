@@ -11,6 +11,7 @@ public class WebBridge
     private readonly ProductRepository _products;
     private readonly TransactionRepository _transactions;
     private readonly CashSessionRepository _cashSessions;
+    private readonly CashMovementRepository _cashMovements;
     private readonly SettingsRepository _settings;
     private readonly ReceiptPrinter _printer;
     private readonly SerialPortManager _serialPort;
@@ -28,6 +29,7 @@ public class WebBridge
         _products = new ProductRepository(db);
         _transactions = new TransactionRepository(db);
         _cashSessions = new CashSessionRepository(db);
+        _cashMovements = new CashMovementRepository(db);
         _settings = new SettingsRepository(db);
         _serialPort = serialPort;
         _printer = new ReceiptPrinter(serialPort);
@@ -64,6 +66,9 @@ public class WebBridge
                 "voidTransaction"    => await HandleVoidTransaction(root),
                 "reprintTransaction" => await HandleReprintTransaction(root),
                 "reprintSession"     => await HandleReprintSession(root),
+                "createCashMovement" => await HandleCreateCashMovement(root),
+                "getCashMovements"   => await HandleGetCashMovements(root),
+                "getAllCashMovements" => await HandleGetAllCashMovements(),
                 "testPrint" => HandleTestPrint(),
                 "getSerialPorts" => HandleGetSerialPorts(),
                 "getSettings" => await HandleGetSettings(),
@@ -191,19 +196,28 @@ public class WebBridge
     private async Task<object> HandleCloseCashSession(JsonElement root)
     {
         var notes = root.TryGetProperty("notes", out var n) ? n.GetString() : null;
-        var session = await _cashSessions.CloseAsync(notes);
+
+        var currentSession = await _cashSessions.GetCurrentAsync();
+        if (currentSession == null) return new { error = "No open session" };
+
+        var (totalDeposits, totalWithdrawals) = await _cashMovements.GetTotalsAsync(currentSession.Id);
+        var session = await _cashSessions.CloseAsync(notes, totalDeposits, totalWithdrawals);
 
         if (session != null)
         {
-            // Print session report with layout config
             var transactions = await _transactions.GetBySessionAsync(session.Id);
-            try
+            var deps = totalDeposits;
+            var withs = totalWithdrawals;
+            _ = Task.Run(async () =>
             {
-                var allSettings = await _settings.GetAllAsync();
-                var printConfig = PrintLayoutConfig.FromSettings(allSettings);
-                _printer.PrintCashSessionReport(session, transactions, printConfig);
-            }
-            catch { }
+                try
+                {
+                    var allSettings = await _settings.GetAllAsync();
+                    var printConfig = PrintLayoutConfig.FromSettings(allSettings);
+                    _printer.PrintCashSessionReport(session, transactions, printConfig, deps, withs);
+                }
+                catch { }
+            });
         }
 
         return session ?? (object)new { error = "No open session" };
@@ -310,6 +324,9 @@ public class WebBridge
         var session = await _cashSessions.GetByIdAsync(id)
             ?? throw new Exception("Sessão não encontrada");
         var transactions = await _transactions.GetBySessionAsync(id);
+        var (totalDeposits, totalWithdrawals) = await _cashMovements.GetTotalsAsync(id);
+        var deps = totalDeposits;
+        var withs = totalWithdrawals;
 
         _ = Task.Run(async () =>
         {
@@ -317,12 +334,63 @@ public class WebBridge
             {
                 var allSettings = await _settings.GetAllAsync();
                 var printConfig = PrintLayoutConfig.FromSettings(allSettings);
-                _printer.PrintCashSessionReport(session, transactions, printConfig);
+                _printer.PrintCashSessionReport(session, transactions, printConfig, deps, withs);
             }
             catch { }
         });
 
         return new { reprinted = true };
+    }
+
+    // Cash Movements
+    private async Task<object> HandleCreateCashMovement(JsonElement root)
+    {
+        var currentSession = await _cashSessions.GetCurrentAsync()
+            ?? throw new Exception("Sem sessão de caixa aberta");
+
+        var type = root.GetProperty("type").GetString() ?? "";
+        if (type != MovementType.Deposit && type != MovementType.Withdrawal)
+            throw new Exception("Tipo de movimento inválido");
+
+        var amount = root.GetProperty("amount").GetDouble();
+        if (amount <= 0)
+            throw new Exception("O valor tem de ser maior que zero");
+
+        var notes = root.TryGetProperty("notes", out var n) ? n.GetString() : null;
+
+        var movement = await _cashMovements.CreateAsync(new CashMovement
+        {
+            CashSessionId = currentSession.Id,
+            Type = type,
+            Amount = amount,
+            Notes = string.IsNullOrWhiteSpace(notes) ? null : notes
+        });
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var allSettings = await _settings.GetAllAsync();
+                var printConfig = PrintLayoutConfig.FromSettings(allSettings);
+                _printer.PrintCashMovementReceipt(movement, printConfig);
+            }
+            catch { }
+        });
+
+        return movement;
+    }
+
+    private async Task<object> HandleGetCashMovements(JsonElement root)
+    {
+        var sessionId = root.GetProperty("sessionId").GetInt32();
+        var movements = await _cashMovements.GetBySessionAsync(sessionId);
+        var (totalDeposits, totalWithdrawals) = await _cashMovements.GetTotalsAsync(sessionId);
+        return new { movements, totalDeposits, totalWithdrawals };
+    }
+
+    private async Task<object> HandleGetAllCashMovements()
+    {
+        return await _cashMovements.GetAllAsync();
     }
 
     // Printer
