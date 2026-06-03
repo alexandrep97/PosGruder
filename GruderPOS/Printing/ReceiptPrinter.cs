@@ -71,12 +71,32 @@ public class PrintLayoutConfig
 
 public class ReceiptPrinter
 {
-    private readonly SerialPortManager _serial;
+    private IPrinterTransport _transport;
     private const int LINE_WIDTH = 42; // 80mm thermal paper, normal font
 
-    public ReceiptPrinter(SerialPortManager serial)
+    public ReceiptPrinter(IPrinterTransport transport)
     {
-        _serial = serial;
+        _transport = transport;
+    }
+
+    public void SetTransport(IPrinterTransport transport)
+    {
+        _transport = transport;
+    }
+
+    private bool WriteText(string text)
+    {
+        try
+        {
+            var encoding = System.Text.Encoding.GetEncoding(860);
+            var data = encoding.GetBytes(text);
+            return _transport.Write(data);
+        }
+        catch
+        {
+            var data = System.Text.Encoding.UTF8.GetBytes(text);
+            return _transport.Write(data);
+        }
     }
 
     /// <summary>
@@ -88,7 +108,7 @@ public class ReceiptPrinter
     {
         try
         {
-            if (!_serial.Connect()) return false;
+            if (!_transport.Connect()) return false;
 
             int copies = Math.Max(1, config.PrintCopies);
             for (int copy = 0; copy < copies; copy++)
@@ -128,49 +148,49 @@ public class ReceiptPrinter
         // Título personalizado do corpo
         if (config.BodyEnabled && !string.IsNullOrWhiteSpace(config.BodyTitle))
         {
-            _serial.Write(EscPosCommands.AlignCenter);
-            _serial.Write(EscPosCommands.BoldOn);
-            _serial.WriteText($"{config.BodyTitle}\n");
-            _serial.Write(EscPosCommands.BoldOff);
+            _transport.Write(EscPosCommands.AlignCenter);
+            _transport.Write(EscPosCommands.BoldOn);
+            WriteText($"{config.BodyTitle}\n");
+            _transport.Write(EscPosCommands.BoldOff);
         }
         else if (!string.IsNullOrWhiteSpace(config.EventName))
         {
-            _serial.Write(EscPosCommands.AlignCenter);
-            _serial.Write(EscPosCommands.BoldOn);
-            _serial.WriteText($"{config.EventName}\n");
-            _serial.Write(EscPosCommands.BoldOff);
+            _transport.Write(EscPosCommands.AlignCenter);
+            _transport.Write(EscPosCommands.BoldOn);
+            WriteText($"{config.EventName}\n");
+            _transport.Write(EscPosCommands.BoldOff);
         }
 
         // Linhas extra do corpo
         if (config.BodyEnabled)
         {
-            _serial.Write(EscPosCommands.AlignCenter);
+            _transport.Write(EscPosCommands.AlignCenter);
             if (!string.IsNullOrWhiteSpace(config.BodyLine1))
-                _serial.WriteText($"{config.BodyLine1}\n");
+                WriteText($"{config.BodyLine1}\n");
             if (!string.IsNullOrWhiteSpace(config.BodyLine2))
-                _serial.WriteText($"{config.BodyLine2}\n");
+                WriteText($"{config.BodyLine2}\n");
         }
 
         PrintCustomerNumberBlock(transaction, config);
         PrintLine('-');
 
         // Info da transação
-        _serial.Write(EscPosCommands.AlignLeft);
+        _transport.Write(EscPosCommands.AlignLeft);
         if (config.ShowDate)
-            _serial.WriteText($"Data: {DateTime.Now:dd/MM/yyyy HH:mm}\n");
+            WriteText($"Data: {DateTime.Now:dd/MM/yyyy HH:mm}\n");
         if (config.ShowReceiptNumber)
-            _serial.WriteText($"Talao No: {transaction.TransactionNumber}\n");
+            WriteText($"Talao No: {transaction.TransactionNumber}\n");
         if (config.ShowSession)
-            _serial.WriteText($"Sessao:   #{transaction.CashSessionId}\n");
+            WriteText($"Sessao:   #{transaction.CashSessionId}\n");
 
         PrintLine('=');
 
         // Cabeçalho das colunas
         if (config.ShowGridHeader)
         {
-            _serial.Write(EscPosCommands.BoldOn);
-            _serial.WriteText(FormatColumns("Artigo", "Qtd", "Total"));
-            _serial.Write(EscPosCommands.BoldOff);
+            _transport.Write(EscPosCommands.BoldOn);
+            WriteText(FormatColumns("Artigo", "Qtd", "Total"));
+            _transport.Write(EscPosCommands.BoldOff);
             PrintLine('-');
         }
 
@@ -183,7 +203,7 @@ public class ReceiptPrinter
                 if (name.Length > 20) name = name[..20];
                 var qty = $"x{item.Quantity}";
                 var total = $"{item.TotalPrice:F2}";
-                _serial.WriteText(FormatColumns(name, qty, total));
+                WriteText(FormatColumns(name, qty, total));
             }
         }
 
@@ -192,16 +212,16 @@ public class ReceiptPrinter
         // Total
         if (config.ShowTotals)
         {
-            _serial.Write(EscPosCommands.BoldOn);
-            _serial.Write(EscPosCommands.SizeDoubleHeight);
-            _serial.WriteText(FormatTotalLine("TOTAL:", $"{transaction.TotalAmount:F2} EUR"));
-            _serial.Write(EscPosCommands.SizeNormal);
-            _serial.Write(EscPosCommands.BoldOff);
+            _transport.Write(EscPosCommands.BoldOn);
+            _transport.Write(EscPosCommands.SizeDoubleHeight);
+            WriteText(FormatTotalLine("TOTAL:", $"{transaction.TotalAmount:F2} EUR"));
+            _transport.Write(EscPosCommands.SizeNormal);
+            _transport.Write(EscPosCommands.BoldOff);
         }
 
         // Método de pagamento
         if (config.ShowPaymentMethod)
-            _serial.WriteText($"Pagamento: {GetPaymentLabel(transaction.PaymentMethod)}\n");
+            WriteText($"Pagamento: {GetPaymentLabel(transaction.PaymentMethod)}\n");
 
         PrintLine('=');
 
@@ -212,8 +232,8 @@ public class ReceiptPrinter
         }
 
         // Feed e corte
-        _serial.Write(EscPosCommands.FeedLines(4));
-        _serial.Write(EscPosCommands.PartialCut);
+        _transport.Write(EscPosCommands.FeedLines(4));
+        _transport.Write(EscPosCommands.PartialCut);
 
         return true;
     }
@@ -247,65 +267,65 @@ public class ReceiptPrinter
                 // Título do corpo ou nome do evento
                 if (config.BodyEnabled && !string.IsNullOrWhiteSpace(config.BodyTitle))
                 {
-                    _serial.Write(EscPosCommands.AlignCenter);
-                    _serial.Write(EscPosCommands.BoldOn);
-                    _serial.WriteText($"{config.BodyTitle}\n");
-                    _serial.Write(EscPosCommands.BoldOff);
+                    _transport.Write(EscPosCommands.AlignCenter);
+                    _transport.Write(EscPosCommands.BoldOn);
+                    WriteText($"{config.BodyTitle}\n");
+                    _transport.Write(EscPosCommands.BoldOff);
                 }
                 else if (!string.IsNullOrWhiteSpace(config.EventName))
                 {
-                    _serial.Write(EscPosCommands.AlignCenter);
-                    _serial.Write(EscPosCommands.BoldOn);
-                    _serial.WriteText($"{config.EventName}\n");
-                    _serial.Write(EscPosCommands.BoldOff);
+                    _transport.Write(EscPosCommands.AlignCenter);
+                    _transport.Write(EscPosCommands.BoldOn);
+                    WriteText($"{config.EventName}\n");
+                    _transport.Write(EscPosCommands.BoldOff);
                 }
 
                 // Linhas extra do corpo
                 if (config.BodyEnabled)
                 {
-                    _serial.Write(EscPosCommands.AlignCenter);
+                    _transport.Write(EscPosCommands.AlignCenter);
                     if (!string.IsNullOrWhiteSpace(config.BodyLine1))
-                        _serial.WriteText($"{config.BodyLine1}\n");
+                        WriteText($"{config.BodyLine1}\n");
                     if (!string.IsNullOrWhiteSpace(config.BodyLine2))
-                        _serial.WriteText($"{config.BodyLine2}\n");
+                        WriteText($"{config.BodyLine2}\n");
                 }
 
                 PrintCustomerNumberBlock(transaction, config);
                 PrintLine('-');
 
                 // Info da transação
-                _serial.Write(EscPosCommands.AlignLeft);
+                _transport.Write(EscPosCommands.AlignLeft);
                 if (config.ShowDate)
-                    _serial.WriteText($"Data: {DateTime.Now:dd/MM/yyyy HH:mm}\n");
+                    WriteText($"Data: {DateTime.Now:dd/MM/yyyy HH:mm}\n");
                 if (config.ShowReceiptNumber || config.ShowTicketNumber)
                 {
                     var parts = new List<string>();
                     if (config.ShowReceiptNumber) parts.Add($"Talao: {transaction.TransactionNumber}");
                     if (config.ShowTicketNumber) parts.Add($"Senha: {ticketNum}/{totalTickets}");
-                    _serial.WriteText(string.Join("  ", parts) + "\n");
+                    WriteText(string.Join("  ", parts) + "\n");
                 }
 
                 PrintLine('=');
 
                 // === ARTIGO EM DESTAQUE ===
-                _serial.Write(EscPosCommands.AlignCenter);
-                _serial.Write(EscPosCommands.BoldOn);
-                _serial.Write(EscPosCommands.SizeDouble);
-                _serial.WriteText($"{item.ProductName}\n");
-                _serial.Write(EscPosCommands.SizeNormal);
+                _transport.Write(EscPosCommands.AlignCenter);
+                _transport.Write(EscPosCommands.BoldOn);
+                _transport.Write(EscPosCommands.SizeDouble);
+                WriteText($"{item.ProductName}\n");
+                _transport.Write(EscPosCommands.SizeNormal);
 
                 // Preço unitário
                 if (config.ShowTotals)
                 {
-                    _serial.Write(EscPosCommands.SizeDoubleHeight);
-                    _serial.WriteText($"{item.UnitPrice:F2} EUR\n");
-                    _serial.Write(EscPosCommands.SizeNormal);
+                    _transport.Write(EscPosCommands.SizeDoubleHeight);
+                    WriteText($"{item.UnitPrice:F2} EUR\n");
+                    _transport.Write(EscPosCommands.SizeNormal);
                 }
-                _serial.Write(EscPosCommands.BoldOff);
+                _transport.Write(EscPosCommands.BoldOff);
 
                 // Método de pagamento
                 if (config.ShowPaymentMethod)
-                    _serial.WriteText($"\n{GetPaymentLabel(transaction.PaymentMethod)}\n");
+                    WriteText($"\n{GetPaymentLabel(transaction.PaymentMethod)}\n");
 
                 PrintLine('=');
 
@@ -316,8 +336,8 @@ public class ReceiptPrinter
                 }
 
                 // Feed e corte
-                _serial.Write(EscPosCommands.FeedLines(4));
-                _serial.Write(EscPosCommands.PartialCut);
+                _transport.Write(EscPosCommands.FeedLines(4));
+                _transport.Write(EscPosCommands.PartialCut);
             }
         }
 
@@ -329,36 +349,36 @@ public class ReceiptPrinter
     /// </summary>
     private void PrintHeader(PrintLayoutConfig config)
     {
-        _serial.Write(EscPosCommands.AlignCenter);
+        _transport.Write(EscPosCommands.AlignCenter);
 
         // Linha 1 - título principal (tamanho grande, bold)
         if (!string.IsNullOrWhiteSpace(config.HeaderLine1))
         {
-            _serial.Write(EscPosCommands.BoldOn);
-            _serial.Write(EscPosCommands.SizeDouble);
-            _serial.WriteText($"{config.HeaderLine1}\n");
-            _serial.Write(EscPosCommands.SizeNormal);
+            _transport.Write(EscPosCommands.BoldOn);
+            _transport.Write(EscPosCommands.SizeDouble);
+            WriteText($"{config.HeaderLine1}\n");
+            _transport.Write(EscPosCommands.SizeNormal);
         }
 
         // Linha 2 - subtítulo (bold)
         if (!string.IsNullOrWhiteSpace(config.HeaderLine2))
         {
-            _serial.Write(EscPosCommands.BoldOn);
-            _serial.WriteText($"{config.HeaderLine2}\n");
+            _transport.Write(EscPosCommands.BoldOn);
+            WriteText($"{config.HeaderLine2}\n");
         }
 
         // Linha 3 - subtítulo (bold)
         if (!string.IsNullOrWhiteSpace(config.HeaderLine3))
         {
-            _serial.WriteText($"{config.HeaderLine3}\n");
-            _serial.Write(EscPosCommands.BoldOff);
+            WriteText($"{config.HeaderLine3}\n");
+            _transport.Write(EscPosCommands.BoldOff);
         }
 
         // Linha 4 - info adicional (normal)
         if (!string.IsNullOrWhiteSpace(config.HeaderLine4))
         {
-            _serial.Write(EscPosCommands.BoldOff);
-            _serial.WriteText($"{config.HeaderLine4}\n");
+            _transport.Write(EscPosCommands.BoldOff);
+            WriteText($"{config.HeaderLine4}\n");
         }
 
         PrintLine('=');
@@ -369,72 +389,72 @@ public class ReceiptPrinter
     /// </summary>
     private void PrintFooter(PrintLayoutConfig config)
     {
-        _serial.Write(EscPosCommands.AlignCenter);
+        _transport.Write(EscPosCommands.AlignCenter);
 
         if (!string.IsNullOrWhiteSpace(config.FooterLine1))
         {
-            _serial.WriteText($"\n{config.FooterLine1}\n");
+            WriteText($"\n{config.FooterLine1}\n");
         }
 
         if (!string.IsNullOrWhiteSpace(config.FooterLine2))
         {
-            _serial.Write(EscPosCommands.BoldOn);
-            _serial.WriteText($"{config.FooterLine2}\n");
-            _serial.Write(EscPosCommands.BoldOff);
+            _transport.Write(EscPosCommands.BoldOn);
+            WriteText($"{config.FooterLine2}\n");
+            _transport.Write(EscPosCommands.BoldOff);
         }
     }
 
     private void PrintCustomerNumberBlock(Transaction transaction, PrintLayoutConfig config)
     {
         if (!config.ShowCustomerNumber || transaction.CustomerNumber == null) return;
-        _serial.Write(EscPosCommands.AlignCenter);
-        _serial.Write(EscPosCommands.BoldOn);
-        _serial.WriteText("No CLIENTE\n");
-        _serial.Write(EscPosCommands.SizeDouble);
-        _serial.WriteText($"{transaction.CustomerNumber}\n");
-        _serial.Write(EscPosCommands.SizeNormal);
-        _serial.Write(EscPosCommands.BoldOff);
-        _serial.Write(EscPosCommands.AlignLeft);
+        _transport.Write(EscPosCommands.AlignCenter);
+        _transport.Write(EscPosCommands.BoldOn);
+        WriteText("No CLIENTE\n");
+        _transport.Write(EscPosCommands.SizeDouble);
+        WriteText($"{transaction.CustomerNumber}\n");
+        _transport.Write(EscPosCommands.SizeNormal);
+        _transport.Write(EscPosCommands.BoldOff);
+        _transport.Write(EscPosCommands.AlignLeft);
     }
 
     public bool PrintCashSessionReport(CashSession session, IEnumerable<Transaction> transactions, PrintLayoutConfig config, double totalDeposits = 0, double totalWithdrawals = 0)
     {
         try
         {
-            if (!_serial.Connect()) return false;
+            if (!_transport.Connect()) return false;
 
             InitPrinter();
 
             // Header
-            _serial.Write(EscPosCommands.AlignCenter);
-            _serial.Write(EscPosCommands.BoldOn);
-            _serial.Write(EscPosCommands.SizeDouble);
+            _transport.Write(EscPosCommands.AlignCenter);
+            _transport.Write(EscPosCommands.BoldOn);
+            _transport.Write(EscPosCommands.SizeDouble);
 
             if (config.HeaderEnabled && !string.IsNullOrWhiteSpace(config.HeaderLine1))
-                _serial.WriteText($"{config.HeaderLine1}\n");
+                WriteText($"{config.HeaderLine1}\n");
             else
-                _serial.WriteText("GRUDER\n");
+                WriteText("GRUDER\n");
 
-            _serial.Write(EscPosCommands.SizeNormal);
-            _serial.WriteText("FECHO DE CAIXA\n");
-            _serial.Write(EscPosCommands.BoldOff);
+            _transport.Write(EscPosCommands.SizeNormal);
+            WriteText("FECHO DE CAIXA\n");
+            _transport.Write(EscPosCommands.BoldOff);
             PrintLine('=');
 
             // Session info
-            _serial.Write(EscPosCommands.AlignLeft);
-            _serial.WriteText($"Sessao:    #{session.Id}\n");
-            _serial.WriteText($"Abertura:  {session.OpenedAt}\n");
-            _serial.WriteText($"Fecho:     {session.ClosedAt ?? "Em aberto"}\n");
+            _transport.Write(EscPosCommands.AlignLeft);
+            WriteText($"Sessao:    #{session.Id}\n");
+            WriteText($"Abertura:  {session.OpenedAt}\n");
+            WriteText($"Fecho:     {session.ClosedAt ?? "Em aberto"}\n");
             PrintLine('-');
 
             // Opening balance
-            _serial.Write(EscPosCommands.BoldOn);
-            _serial.WriteText(FormatTotalLine("Fundo Caixa:", $"{session.OpeningBalance:F2}"));
-            _serial.Write(EscPosCommands.BoldOff);
+            _transport.Write(EscPosCommands.BoldOn);
+            WriteText(FormatTotalLine("Fundo Caixa:", $"{session.OpeningBalance:F2}"));
+            _transport.Write(EscPosCommands.BoldOff);
 
             // Payment method breakdown
             PrintLine('-');
-            _serial.WriteText("PAGAMENTOS:\n");
+            WriteText("PAGAMENTOS:\n");
             var byPayment = transactions
                 .Where(t => !t.Voided)
                 .GroupBy(t => t.PaymentMethod)
@@ -442,37 +462,37 @@ public class ReceiptPrinter
 
             foreach (var pm in byPayment)
             {
-                _serial.WriteText(FormatTotalLine($"  {GetPaymentLabel(pm.Method)} ({pm.Count}):", $"{pm.Total:F2}"));
+                WriteText(FormatTotalLine($"  {GetPaymentLabel(pm.Method)} ({pm.Count}):", $"{pm.Total:F2}"));
             }
 
             // Totals summary
             PrintLine('-');
-            _serial.Write(EscPosCommands.BoldOn);
-            _serial.WriteText(FormatTotalLine("TOTAL VENDAS:", $"{session.TotalSales:F2}"));
+            _transport.Write(EscPosCommands.BoldOn);
+            WriteText(FormatTotalLine("TOTAL VENDAS:", $"{session.TotalSales:F2}"));
             if (totalDeposits > 0)
-                _serial.WriteText(FormatTotalLine("+ Depositos:", $"+{totalDeposits:F2}"));
+                WriteText(FormatTotalLine("+ Depositos:", $"+{totalDeposits:F2}"));
             if (totalWithdrawals > 0)
-                _serial.WriteText(FormatTotalLine("- Levantamentos:", $"-{totalWithdrawals:F2}"));
+                WriteText(FormatTotalLine("- Levantamentos:", $"-{totalWithdrawals:F2}"));
             PrintLine('-');
             var closing = session.ClosingBalance ?? (session.OpeningBalance + session.TotalSales + totalDeposits - totalWithdrawals);
-            _serial.Write(EscPosCommands.SizeDoubleHeight);
-            _serial.WriteText(FormatTotalLine("TOTAL CAIXA:", $"{closing:F2} EUR"));
-            _serial.Write(EscPosCommands.SizeNormal);
-            _serial.Write(EscPosCommands.BoldOff);
+            _transport.Write(EscPosCommands.SizeDoubleHeight);
+            WriteText(FormatTotalLine("TOTAL CAIXA:", $"{closing:F2} EUR"));
+            _transport.Write(EscPosCommands.SizeNormal);
+            _transport.Write(EscPosCommands.BoldOff);
 
             // Voided count
             var voidedCount = transactions.Count(t => t.Voided);
             if (voidedCount > 0)
             {
                 PrintLine('-');
-                _serial.WriteText($"Transacoes anuladas: {voidedCount}\n");
+                WriteText($"Transacoes anuladas: {voidedCount}\n");
             }
 
             // Notes
             if (!string.IsNullOrWhiteSpace(session.Notes))
             {
                 PrintLine('-');
-                _serial.WriteText($"Notas: {session.Notes}\n");
+                WriteText($"Notas: {session.Notes}\n");
             }
 
             PrintLine('=');
@@ -482,8 +502,8 @@ public class ReceiptPrinter
                 PrintFooter(config);
             }
 
-            _serial.Write(EscPosCommands.FeedLines(4));
-            _serial.Write(EscPosCommands.PartialCut);
+            _transport.Write(EscPosCommands.FeedLines(4));
+            _transport.Write(EscPosCommands.PartialCut);
 
             return true;
         }
@@ -498,41 +518,41 @@ public class ReceiptPrinter
     {
         try
         {
-            if (!_serial.Connect()) return false;
+            if (!_transport.Connect()) return false;
 
             InitPrinter();
 
-            _serial.Write(EscPosCommands.AlignCenter);
-            _serial.Write(EscPosCommands.BoldOn);
-            _serial.Write(EscPosCommands.SizeDouble);
+            _transport.Write(EscPosCommands.AlignCenter);
+            _transport.Write(EscPosCommands.BoldOn);
+            _transport.Write(EscPosCommands.SizeDouble);
             if (config.HeaderEnabled && !string.IsNullOrWhiteSpace(config.HeaderLine1))
-                _serial.WriteText($"{config.HeaderLine1}\n");
+                WriteText($"{config.HeaderLine1}\n");
             else
-                _serial.WriteText("GRUDER\n");
-            _serial.Write(EscPosCommands.SizeNormal);
-            _serial.Write(EscPosCommands.BoldOff);
+                WriteText("GRUDER\n");
+            _transport.Write(EscPosCommands.SizeNormal);
+            _transport.Write(EscPosCommands.BoldOff);
             PrintLine('=');
 
-            _serial.Write(EscPosCommands.AlignCenter);
-            _serial.Write(EscPosCommands.BoldOn);
-            _serial.Write(EscPosCommands.SizeDouble);
+            _transport.Write(EscPosCommands.AlignCenter);
+            _transport.Write(EscPosCommands.BoldOn);
+            _transport.Write(EscPosCommands.SizeDouble);
             var typeLabel = movement.Type == MovementType.Deposit ? "DEPOSITO" : "LEVANTAMENTO";
-            _serial.WriteText($"{typeLabel}\n");
-            _serial.Write(EscPosCommands.SizeNormal);
-            _serial.Write(EscPosCommands.BoldOff);
+            WriteText($"{typeLabel}\n");
+            _transport.Write(EscPosCommands.SizeNormal);
+            _transport.Write(EscPosCommands.BoldOff);
             PrintLine('=');
 
-            _serial.Write(EscPosCommands.AlignLeft);
+            _transport.Write(EscPosCommands.AlignLeft);
             if (DateTime.TryParse(movement.CreatedAt, out var dt))
-                _serial.WriteText($"Data:  {dt:dd/MM/yyyy HH:mm}\n");
-            _serial.Write(EscPosCommands.BoldOn);
-            _serial.WriteText(FormatTotalLine("Valor:", $"{movement.Amount:F2} EUR"));
-            _serial.Write(EscPosCommands.BoldOff);
+                WriteText($"Data:  {dt:dd/MM/yyyy HH:mm}\n");
+            _transport.Write(EscPosCommands.BoldOn);
+            WriteText(FormatTotalLine("Valor:", $"{movement.Amount:F2} EUR"));
+            _transport.Write(EscPosCommands.BoldOff);
 
             if (!string.IsNullOrWhiteSpace(movement.Notes))
             {
                 PrintLine('-');
-                _serial.WriteText($"Notas: {movement.Notes}\n");
+                WriteText($"Notas: {movement.Notes}\n");
             }
 
             PrintLine('=');
@@ -540,8 +560,8 @@ public class ReceiptPrinter
             if (config.FooterEnabled)
                 PrintFooter(config);
 
-            _serial.Write(EscPosCommands.FeedLines(4));
-            _serial.Write(EscPosCommands.PartialCut);
+            _transport.Write(EscPosCommands.FeedLines(4));
+            _transport.Write(EscPosCommands.PartialCut);
 
             return true;
         }
@@ -556,23 +576,23 @@ public class ReceiptPrinter
     {
         try
         {
-            if (!_serial.Connect()) return false;
+            if (!_transport.Connect()) return false;
 
             InitPrinter();
-            _serial.Write(EscPosCommands.AlignCenter);
-            _serial.Write(EscPosCommands.BoldOn);
-            _serial.Write(EscPosCommands.SizeDouble);
-            _serial.WriteText("POS GRUDER\n");
-            _serial.Write(EscPosCommands.SizeNormal);
-            _serial.Write(EscPosCommands.BoldOff);
-            _serial.WriteText("Teste de Impressao\n");
+            _transport.Write(EscPosCommands.AlignCenter);
+            _transport.Write(EscPosCommands.BoldOn);
+            _transport.Write(EscPosCommands.SizeDouble);
+            WriteText("POS GRUDER\n");
+            _transport.Write(EscPosCommands.SizeNormal);
+            _transport.Write(EscPosCommands.BoldOff);
+            WriteText("Teste de Impressao\n");
             PrintLine('-');
-            _serial.Write(EscPosCommands.AlignLeft);
-            _serial.WriteText($"Data: {DateTime.Now:dd/MM/yyyy HH:mm:ss}\n");
-            _serial.WriteText("Impressora OK!\n");
+            _transport.Write(EscPosCommands.AlignLeft);
+            WriteText($"Data: {DateTime.Now:dd/MM/yyyy HH:mm:ss}\n");
+            WriteText("Impressora OK!\n");
             PrintLine('=');
-            _serial.Write(EscPosCommands.FeedLines(3));
-            _serial.Write(EscPosCommands.PartialCut);
+            _transport.Write(EscPosCommands.FeedLines(3));
+            _transport.Write(EscPosCommands.PartialCut);
 
             return true;
         }
@@ -586,13 +606,13 @@ public class ReceiptPrinter
 
     private void InitPrinter()
     {
-        _serial.Write(EscPosCommands.Initialize);
-        _serial.Write(EscPosCommands.SetCodePage860);
+        _transport.Write(EscPosCommands.Initialize);
+        _transport.Write(EscPosCommands.SetCodePage860);
     }
 
     private void PrintLine(char c)
     {
-        _serial.WriteText(new string(c, LINE_WIDTH) + "\n");
+        WriteText(new string(c, LINE_WIDTH) + "\n");
     }
 
     private string FormatColumns(string col1, string col2, string col3)
