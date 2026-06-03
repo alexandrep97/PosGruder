@@ -670,70 +670,103 @@ const settings = {
     // ===== Printer Settings =====
     async renderPrinter(container) {
         let portsData = { ports: [], currentPort: 'COM3', baudRate: 9600 };
-        try {
-            portsData = await bridge.send('getSerialPorts');
-        } catch (e) {}
+        try { portsData = await bridge.send('getSerialPorts'); } catch (e) {}
 
         const appSettings = await bridge.send('getSettings').catch(() => ({}));
+        const printerType = appSettings.PrinterType || 'COM';
+        const printerEnabled = appSettings.PrinterEnabled !== 'false';
         const printCopies = parseInt(appSettings.PrintCopies) || 1;
 
-        let portsOptions = (portsData.ports || []).map(p =>
-            `<option value="${p}" ${p === portsData.currentPort ? 'selected' : ''}>${p}</option>`
+        const comPortOptions = (portsData.ports?.length
+            ? portsData.ports.map(p =>
+                `<option value="${p}" ${p === (appSettings.SerialPort || portsData.currentPort) ? 'selected' : ''}>${p}</option>`)
+            : [`<option value="COM3">COM3 (default)</option>`]
         ).join('');
 
-        if (!portsOptions) {
-            portsOptions = '<option value="COM3">COM3 (default)</option>';
-        }
+        const baudOptions = [9600, 19200, 38400, 57600, 115200].map(b =>
+            `<option value="${b}" ${b === (parseInt(appSettings.BaudRate) || 9600) ? 'selected' : ''}>${b}</option>`
+        ).join('');
 
         container.innerHTML = `
-            <div class="settings-form">
-                <h3 style="font-size: 16px; margin-bottom: 20px;">Configuração da Impressora</h3>
-                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
-                    Impressora: appPOS80AM3 (Porta Série, ESC/POS)
-                </p>
+        <div class="settings-form">
+            <h3 style="font-size:16px;margin-bottom:20px;">Configuração da Impressora</h3>
+
+            <div class="form-group">
+                <label class="form-checkbox">
+                    <input type="checkbox" id="printer-enabled" ${printerEnabled ? 'checked' : ''}>
+                    <span>Impressora ativada</span>
+                </label>
+            </div>
+
+            <div class="printer-type-tabs">
+                <button class="tab-btn ${printerType === 'COM' ? 'active' : ''}" onclick="settings.switchPrinterTab('COM')">COM</button>
+                <button class="tab-btn ${printerType === 'USB' ? 'active' : ''}" onclick="settings.switchPrinterTab('USB')">USB</button>
+                <button class="tab-btn ${printerType === 'LAN' ? 'active' : ''}" onclick="settings.switchPrinterTab('LAN')">LAN</button>
+            </div>
+
+            <div id="tab-panel-COM" ${printerType !== 'COM' ? 'style="display:none"' : ''}>
                 <div class="form-group">
                     <label>Porta COM</label>
-                    <select id="printer-port" class="form-select">${portsOptions}</select>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <select id="printer-port" class="form-select" style="flex:1;">${comPortOptions}</select>
+                        <button class="btn btn-secondary" onclick="settings.refreshPorts(this)">↺</button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Baud Rate</label>
-                    <select id="printer-baud" class="form-select">
-                        <option value="9600" ${portsData.baudRate === 9600 ? 'selected' : ''}>9600</option>
-                        <option value="19200" ${portsData.baudRate === 19200 ? 'selected' : ''}>19200</option>
-                        <option value="38400" ${portsData.baudRate === 38400 ? 'selected' : ''}>38400</option>
-                        <option value="57600" ${portsData.baudRate === 57600 ? 'selected' : ''}>57600</option>
-                        <option value="115200" ${portsData.baudRate === 115200 ? 'selected' : ''}>115200</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-checkbox">
-                        <input type="checkbox" id="printer-enabled" ${appSettings.PrinterEnabled !== 'false' ? 'checked' : ''}>
-                        <span>Impressora ativada</span>
-                    </label>
+                    <select id="printer-baud" class="form-select">${baudOptions}</select>
                 </div>
             </div>
 
-            <div class="settings-form" style="margin-top: 16px;">
-                <h3 style="font-size: 16px; margin-bottom: 8px;">Vias de Impressão</h3>
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
-                    Número de cópias idênticas impressas por cada pagamento.
-                    Exemplo: 3 vias = 3 impressões idênticas do mesmo talão/senhas.
-                </p>
+            <div id="tab-panel-USB" ${printerType !== 'USB' ? 'style="display:none"' : ''}>
                 <div class="form-group">
-                    <label>Quantidade de vias</label>
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <button class="qty-btn" onclick="settings.adjustCopies(-1)" style="width:44px;height:44px;font-size:20px;">−</button>
-                        <span id="printer-copies-value" style="font-size:28px; font-weight:800; min-width:40px; text-align:center;">${printCopies}</span>
-                        <button class="qty-btn" onclick="settings.adjustCopies(1)" style="width:44px;height:44px;font-size:20px;">+</button>
+                    <label>Impressora Windows</label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <select id="printer-usb-name" class="form-select" style="flex:1;">
+                            <option value="">A carregar...</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="settings.refreshWindowsPrinters(this)">↺</button>
                     </div>
                 </div>
             </div>
 
-            <div style="display: flex; gap: 8px; margin-top: 16px;">
-                <button class="btn btn-primary" onclick="settings.savePrinterSettings(this)">Guardar</button>
-                <button class="btn btn-outline" onclick="settings.testPrint(this)">Teste de Impressão</button>
-                <button class="btn btn-secondary" onclick="settings.refreshPorts(this)">Atualizar Portas</button>
-            </div>`;
+            <div id="tab-panel-LAN" ${printerType !== 'LAN' ? 'style="display:none"' : ''}>
+                <div class="form-group">
+                    <label>Endereço IP</label>
+                    <input type="text" id="printer-lan-ip" class="form-input"
+                        value="${appSettings.LanIpAddress || ''}" placeholder="192.168.1.100">
+                </div>
+                <div class="form-group">
+                    <label>Porta</label>
+                    <input type="number" id="printer-lan-port" class="form-input"
+                        value="${appSettings.LanPort || '9100'}" min="1" max="65535" style="width:120px;">
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-form" style="margin-top:16px;">
+            <h3 style="font-size:16px;margin-bottom:8px;">Vias de Impressão</h3>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">
+                Número de cópias idênticas impressas por cada pagamento.
+            </p>
+            <div class="form-group">
+                <label>Quantidade de vias</label>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <button class="qty-btn" onclick="settings.adjustCopies(-1)" style="width:44px;height:44px;font-size:20px;">−</button>
+                    <span id="printer-copies-value" style="font-size:28px;font-weight:800;min-width:40px;text-align:center;">${printCopies}</span>
+                    <button class="qty-btn" onclick="settings.adjustCopies(1)" style="width:44px;height:44px;font-size:20px;">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:16px;">
+            <button class="btn btn-primary" onclick="settings.savePrinterSettings(this)">Guardar</button>
+            <button class="btn btn-outline" onclick="settings.testPrint(this)">Teste de Impressão</button>
+        </div>`;
+
+        if (printerType === 'USB') {
+            await this._loadWindowsPrinters(appSettings.UsbPrinterName || '');
+        }
     },
 
     adjustCopies(delta) {
@@ -744,16 +777,29 @@ const settings = {
     },
 
     async savePrinterSettings(btn) {
-        const port = document.getElementById('printer-port').value;
-        const baudRate = document.getElementById('printer-baud').value;
         const enabled = document.getElementById('printer-enabled').checked;
         const copies = document.getElementById('printer-copies-value').textContent;
+        const activeTab = document.querySelector('.printer-type-tabs .tab-btn.active')?.textContent || 'COM';
+
+        const data = {
+            PrinterType: activeTab,
+            PrinterEnabled: String(enabled),
+            PrintCopies: copies,
+        };
+
+        if (activeTab === 'COM') {
+            data.SerialPort = document.getElementById('printer-port').value;
+            data.BaudRate = document.getElementById('printer-baud').value;
+        } else if (activeTab === 'USB') {
+            data.UsbPrinterName = document.getElementById('printer-usb-name').value;
+        } else if (activeTab === 'LAN') {
+            data.LanIpAddress = document.getElementById('printer-lan-ip').value;
+            data.LanPort = document.getElementById('printer-lan-port').value;
+        }
 
         setButtonLoading(btn, true);
         try {
-            await bridge.send('saveSettings', {
-                data: { SerialPort: port, BaudRate: baudRate, PrinterEnabled: String(enabled), PrintCopies: copies }
-            });
+            await bridge.send('saveSettings', { data });
             showToast('Configuração da impressora guardada!', 'success');
         } catch (e) {
             showToast('Erro: ' + e.message, 'error');
@@ -780,8 +826,69 @@ const settings = {
 
     async refreshPorts(btn) {
         setButtonLoading(btn, true);
-        await this.renderPrinter(document.getElementById('settings-content'));
-        showToast('Portas atualizadas', 'info');
+        try {
+            const data = await bridge.send('getSerialPorts');
+            const select = document.getElementById('printer-port');
+            if (!select) return;
+            const current = select.value;
+            select.innerHTML = (data.ports?.length
+                ? data.ports.map(p => `<option value="${p}" ${p === (current || data.currentPort) ? 'selected' : ''}>${p}</option>`)
+                : [`<option value="COM3">COM3 (default)</option>`]
+            ).join('');
+            showToast('Portas atualizadas', 'info');
+        } catch (e) {
+            showToast('Erro ao atualizar portas: ' + e.message, 'error');
+        } finally {
+            setButtonLoading(btn, false);
+        }
+    },
+
+    switchPrinterTab(type) {
+        document.querySelectorAll('.printer-type-tabs .tab-btn')
+            .forEach(b => b.classList.toggle('active', b.textContent === type));
+        ['COM', 'USB', 'LAN'].forEach(t => {
+            const panel = document.getElementById(`tab-panel-${t}`);
+            if (panel) panel.style.display = t === type ? '' : 'none';
+        });
+        if (type === 'USB') {
+            const current = document.getElementById('printer-usb-name')?.value || '';
+            this._loadWindowsPrinters(current);
+        }
+    },
+
+    async _loadWindowsPrinters(currentPrinter) {
+        const select = document.getElementById('printer-usb-name');
+        if (!select) return;
+        try {
+            const data = await bridge.send('getWindowsPrinters');
+            select.innerHTML = (data.printers?.length
+                ? data.printers.map(p =>
+                    `<option value="${p}" ${p === currentPrinter ? 'selected' : ''}>${p}</option>`)
+                : [`<option value="">Nenhuma impressora encontrada</option>`]
+            ).join('');
+        } catch (e) {
+            select.innerHTML = '<option value="">Erro ao carregar impressoras</option>';
+        }
+    },
+
+    async refreshWindowsPrinters(btn) {
+        setButtonLoading(btn, true);
+        try {
+            const data = await bridge.send('getWindowsPrinters');
+            const select = document.getElementById('printer-usb-name');
+            if (!select) return;
+            const current = select.value;
+            select.innerHTML = (data.printers?.length
+                ? data.printers.map(p =>
+                    `<option value="${p}" ${p === current ? 'selected' : ''}>${p}</option>`)
+                : [`<option value="">Nenhuma impressora encontrada</option>`]
+            ).join('');
+            showToast('Impressoras atualizadas', 'info');
+        } catch (e) {
+            showToast('Erro ao obter impressoras: ' + e.message, 'error');
+        } finally {
+            setButtonLoading(btn, false);
+        }
     },
 
     // ===== General Settings =====
