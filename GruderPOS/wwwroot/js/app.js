@@ -13,7 +13,7 @@ const app = {
         // Session indicator click handler
         document.getElementById('session-indicator').onclick = () => {
             if (this.currentSession && this.currentSession.id) {
-                this.showCloseSessionModal();
+                this.showSessionDropdown();
             } else {
                 this.showOpenSessionModal();
             }
@@ -98,14 +98,22 @@ const app = {
         modal.classList.add('active');
     },
 
-    showCloseSessionModal() {
+    async showCloseSessionModal() {
         const modal = document.getElementById('modal-session');
         const title = document.getElementById('session-modal-title');
         const body = document.getElementById('session-modal-body');
         const footer = document.getElementById('session-modal-footer');
 
         const s = this.currentSession;
-        const expectedBalance = (s.openingBalance || 0) + (s.totalSales || 0);
+
+        let totalDeposits = 0, totalWithdrawals = 0;
+        try {
+            const movData = await bridge.send('getCashMovements', { sessionId: s.id });
+            totalDeposits = movData.totalDeposits || 0;
+            totalWithdrawals = movData.totalWithdrawals || 0;
+        } catch (e) { /* continue without movements if fetch fails */ }
+
+        const expectedBalance = (s.openingBalance || 0) + (s.totalSales || 0) + totalDeposits - totalWithdrawals;
 
         title.textContent = 'Fechar Caixa';
         body.innerHTML = `
@@ -117,22 +125,27 @@ const app = {
                     </div>
                     <div class="session-stat">
                         <div class="session-stat-value">${formatCurrency(s.totalSales || 0)}</div>
-                        <div class="session-stat-label">Vendas</div>
+                        <div class="session-stat-label">Vendas (${s.totalTransactions || 0})</div>
                     </div>
-                    <div class="session-stat">
-                        <div class="session-stat-value">${s.totalTransactions || 0}</div>
-                        <div class="session-stat-label">Transações</div>
+                    <div class="session-stat session-stat-deposits">
+                        <div class="session-stat-value" style="color:#4caf50">+${formatCurrency(totalDeposits)}</div>
+                        <div class="session-stat-label">Depósitos</div>
                     </div>
-                    <div class="session-stat">
-                        <div class="session-stat-value text-success">${formatCurrency(expectedBalance)}</div>
-                        <div class="session-stat-label">Total Esperado</div>
+                    <div class="session-stat session-stat-withdrawals">
+                        <div class="session-stat-value" style="color:#ff9800">-${formatCurrency(totalWithdrawals)}</div>
+                        <div class="session-stat-label">Levantamentos</div>
                     </div>
+                </div>
+                <div class="session-stat session-stat-total-row" style="padding:10px;border-radius:6px;background:var(--surface);text-align:center">
+                    <div class="session-stat-value text-success" style="font-size:1.4rem">${formatCurrency(expectedBalance)}</div>
+                    <div class="session-stat-label">Total Esperado</div>
                 </div>
             </div>
             <div class="form-group">
                 <label>Notas (opcional)</label>
                 <div class="input-with-keyboard">
-                    <textarea id="close-notes" class="form-input" rows="3" placeholder="Observações sobre o fecho de caixa..."></textarea>
+                    <textarea id="close-notes" class="form-input" rows="3"
+                              placeholder="Observações sobre o fecho de caixa..."></textarea>
                     <button class="btn-keyboard" data-target="close-notes" data-label="Notas">⌨</button>
                 </div>
             </div>
@@ -146,6 +159,78 @@ const app = {
 
     closeSessionModal() {
         document.getElementById('modal-session').classList.remove('active');
+    },
+
+    showSessionDropdown() {
+        document.getElementById('session-dropdown').classList.remove('hidden');
+        const handler = (e) => {
+            if (!e.target.closest('#session-dropdown') && !e.target.closest('#session-indicator')) {
+                this.hideSessionDropdown();
+            }
+        };
+        setTimeout(() => document.addEventListener('mousedown', handler, { once: true }), 0);
+    },
+
+    hideSessionDropdown() {
+        document.getElementById('session-dropdown').classList.add('hidden');
+    },
+
+    showCashMovementModal(type) {
+        this.hideSessionDropdown();
+        const modal = document.getElementById('modal-session');
+        const title = document.getElementById('session-modal-title');
+        const body = document.getElementById('session-modal-body');
+        const footer = document.getElementById('session-modal-footer');
+
+        const isDeposit = type === 'Deposit';
+        const color = isDeposit ? '#2196f3' : '#ff9800';
+        const label = isDeposit ? '💰 Depósito' : '💸 Levantamento';
+        const btnClass = isDeposit ? 'btn-success' : 'btn-danger';
+
+        title.innerHTML = `<span style="color:${color}">${label}</span>`;
+        body.innerHTML = `
+            <div class="form-group">
+                <label>Valor (€)</label>
+                <input type="number" id="movement-amount" class="form-input form-input-large"
+                       value="0.00" step="0.01" min="0.01">
+            </div>
+            <div class="form-group">
+                <label>Notas</label>
+                <div class="input-with-keyboard">
+                    <textarea id="movement-notes" class="form-input" rows="3"
+                              placeholder="Nome do operador, motivo..."></textarea>
+                    <button class="btn-keyboard" data-target="movement-notes" data-label="Notas">⌨</button>
+                </div>
+            </div>
+        `;
+        footer.innerHTML = `
+            <button class="btn btn-secondary" onclick="app.closeSessionModal()">Cancelar</button>
+            <button class="btn ${btnClass}" onclick="app.submitCashMovement('${type}')">Confirmar</button>
+        `;
+        modal.classList.add('active');
+        const amountInput = document.getElementById('movement-amount');
+        amountInput.focus();
+        amountInput.select();
+    },
+
+    async submitCashMovement(type) {
+        const amount = parseFloat(document.getElementById('movement-amount').value) || 0;
+        if (amount <= 0) {
+            showToast('O valor tem de ser maior que zero', 'error');
+            return;
+        }
+        const notes = document.getElementById('movement-notes').value;
+        const btn = document.querySelector('#session-modal-footer .btn:last-child');
+        setButtonLoading(btn, true);
+        try {
+            await bridge.send('createCashMovement', { type, amount, notes });
+            this.closeSessionModal();
+            const label = type === 'Deposit' ? 'Depósito registado!' : 'Levantamento registado!';
+            showToast(label, 'success');
+        } catch (e) {
+            showToast('Erro: ' + e.message, 'error');
+            setButtonLoading(btn, false);
+        }
     },
 
     async openSession() {
