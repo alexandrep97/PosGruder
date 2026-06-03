@@ -33,7 +33,7 @@ public class CashSessionRepository
             "SELECT * FROM CashSessions WHERE Id = @Id", new { Id = id }));
     }
 
-    public async Task<CashSession?> CloseAsync(string? notes)
+    public async Task<CashSession?> CloseAsync(string? notes, double totalDeposits = 0, double totalWithdrawals = 0)
     {
         using var conn = _db.GetConnection();
         var session = await conn.QueryFirstOrDefaultAsync<CashSession>(
@@ -41,11 +41,11 @@ public class CashSessionRepository
 
         if (session == null) return null;
 
-        var closingBalance = session.OpeningBalance + session.TotalSales;
+        var closingBalance = session.OpeningBalance + session.TotalSales + totalDeposits - totalWithdrawals;
 
         await conn.ExecuteAsync(@"
-            UPDATE CashSessions SET 
-                Status = 'Closed', 
+            UPDATE CashSessions SET
+                Status = 'Closed',
                 ClosedAt = datetime('now','localtime'),
                 ClosingBalance = @ClosingBalance,
                 Notes = @Notes
