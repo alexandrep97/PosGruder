@@ -1622,21 +1622,21 @@ button, a, input, select, label, .product-card, .print-mode-card, .payment-btn, 
 }
 
 #modal-keyboard .modal-content {
-    max-width: 520px;
+    max-width: 860px;
 }
 
 .vk-display {
     width: 100%;
-    min-height: 48px;
-    padding: 12px 16px;
+    min-height: 64px;
+    padding: 16px 20px;
     border: 2px solid var(--primary);
     border-radius: var(--radius-sm);
-    font-size: 18px;
+    font-size: 22px;
     font-family: var(--font);
     background: var(--bg);
     color: var(--text);
     word-break: break-all;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .vk-display::after {
@@ -1655,24 +1655,24 @@ button, a, input, select, label, .product-card, .print-mode-card, .payment-btn, 
 .vk-keyboard {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
 }
 
 .vk-row {
     display: flex;
-    gap: 4px;
+    gap: 8px;
     justify-content: center;
 }
 
 .vk-key {
     flex: 1;
-    min-height: 44px;
+    min-height: 62px;
     padding: 4px 2px;
     border: 1.5px solid var(--border);
     border-radius: var(--radius-xs);
     background: var(--card-bg);
     color: var(--text);
-    font-size: 13px;
+    font-size: 17px;
     font-family: var(--font);
     font-weight: 500;
     cursor: pointer;
@@ -1736,13 +1736,13 @@ button, a, input, select, label, .product-card, .print-mode-card, .payment-btn, 
     position: absolute;
     bottom: calc(100% + 4px);
     left: 0;
-    right: 0;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    min-width: 170px;
+    background: var(--secondary-light);
+    border: 1px solid rgba(255,255,255,0.1);
     border-radius: 8px;
     padding: 4px;
     z-index: 200;
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
 }
 .session-dropdown.hidden { display: none; }
 .session-dropdown-item {
@@ -1751,14 +1751,15 @@ button, a, input, select, label, .product-card, .print-mode-card, .payment-btn, 
     padding: 9px 12px;
     background: none;
     border: none;
-    color: var(--text);
+    color: #f0f0f0;
     text-align: left;
     cursor: pointer;
     border-radius: 4px;
     font-size: 13px;
+    white-space: nowrap;
 }
-.session-dropdown-item:hover { background: var(--hover); }
-.session-dropdown-divider { height: 1px; background: var(--border); margin: 4px 2px; }
+.session-dropdown-item:hover { background: rgba(255,255,255,0.08); }
+.session-dropdown-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 4px 2px; }
 .session-dropdown-danger { color: var(--danger); }
 
 /* Close dialog — movement stat cards */

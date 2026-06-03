@@ -35,6 +35,7 @@ public class MainForm : Form
         this.Size = new Size(1280, 800);
         this.MinimumSize = new Size(1024, 600);
         this.StartPosition = FormStartPosition.CenterScreen;
+        this.WindowState = FormWindowState.Maximized;
         this.FormBorderStyle = FormBorderStyle.None;
         this.BackColor = Color.FromArgb(26, 26, 26);
 
