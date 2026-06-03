@@ -38,7 +38,7 @@ public class WindowsPrinterTransport : IPrinterTransport
 
         try
         {
-            var di = new DOCINFO { pDocName = "ESC/POS", pDataType = "RAW" };
+            var di = new DOCINFO { cbSize = Marshal.SizeOf<DOCINFO>(), pDocName = "ESC/POS", pDataType = "RAW" };
             if (StartDocPrinter(hPrinter, 1, ref di) == 0) return false;
             if (!StartPagePrinter(hPrinter))
             {
@@ -50,7 +50,12 @@ public class WindowsPrinterTransport : IPrinterTransport
             try
             {
                 Marshal.Copy(data, 0, ptr, data.Length);
-                WritePrinter(hPrinter, ptr, data.Length, out _);
+                if (!WritePrinter(hPrinter, ptr, data.Length, out var written) || written != data.Length)
+                {
+                    EndPagePrinter(hPrinter);
+                    EndDocPrinter(hPrinter);
+                    return false;
+                }
             }
             finally
             {
@@ -75,6 +80,7 @@ public class WindowsPrinterTransport : IPrinterTransport
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct DOCINFO
     {
+        public int cbSize;
         [MarshalAs(UnmanagedType.LPWStr)]
         public string pDocName;
         [MarshalAs(UnmanagedType.LPWStr)]
